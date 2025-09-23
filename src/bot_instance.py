@@ -6,7 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 
 from aiogram.fsm.state import State, StatesGroup
 
-class States(StatesGroup):
+class GlobalStates(StatesGroup):
     
     register_1_ask_username            = State()
     register_2_ask_password            = State()
@@ -16,7 +16,6 @@ class States(StatesGroup):
     register_6_ask_confirm_register    = State()
     
     login_1_ask_credentials            = State()
-
 
 bot = Bot(
     token=str(getenv("BOT_TOKEN")),

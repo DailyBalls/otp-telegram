@@ -15,5 +15,4 @@ command_router.message.register(cmd_unbind, Command('unbind'))
 whitelisted_only_router = Router()
 whitelisted_only_router.message.middleware(WhitelistedOnlyMiddleware())
 command_router.include_routers(whitelisted_only_router)
-
 whitelisted_only_router.message.register(cmd_developer, Command('developer'))
