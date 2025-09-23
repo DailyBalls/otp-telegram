@@ -1,5 +1,6 @@
 import asyncio
 from os import getenv
+from aiogram.fsm.storage.redis import RedisStorage
 from dotenv import load_dotenv
 
 from handlers.command_router import command_router
@@ -9,9 +10,11 @@ load_dotenv()
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 from aiogram.types import Message
+from aiogram.fsm.middleware import FSMContextMiddleware
 
-from bot_instance import bot
+from bot_instance import bot, States
 from config import BotConfig
+import redis.asyncio as redis
 
 
 
@@ -22,27 +25,23 @@ WHITELIST_IDS = [
     
 ]
 
-dp = Dispatcher()
-
-
-# # Command handler
-# @dp.message(Command("start"))
-# async def command_start_handler(message: Message) -> None:
-#     await message.answer("Hello! I'm a bot created with aiogram.")
-
 
 def register_routers(dp: Dispatcher) -> None:
     """Registers routers"""
-
     dp.include_router(command_router)
     dp.include_router(message_router)
 
 
 async def main() -> None:
     """The main function which will execute our event loop and start polling."""
+    redis_client = redis.Redis(host=getenv("REDIS_HOST"), port=getenv("REDIS_PORT"), password=getenv("REDIS_PASSWORD"), socket_connect_timeout=3)
+    await redis_client.ping()
+    print("Redis connected")
+    redis_storage = RedisStorage(redis=redis_client)
     
     config = BotConfig(server_name=SERVER_NAME, whitelist_mode=WHITELIST_MODE, whitelist_ids=WHITELIST_IDS)
-    dp = Dispatcher()
+
+    dp = Dispatcher(storage=redis_storage)
     dp["config"] = config
 
     register_routers(dp)
