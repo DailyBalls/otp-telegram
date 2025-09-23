@@ -1,0 +1,9 @@
+.cursor
+.env
+.venv
+memory-bank
+### Python ###
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
