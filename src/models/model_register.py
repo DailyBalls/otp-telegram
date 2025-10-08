@@ -5,8 +5,9 @@ from aiogram.fsm.context import FSMContext
 from bot_instance import bot
 from contextlib import suppress
 import asyncio
+from .base_state_model import BaseStateModel
 
-class ModelRegister(BaseModel):
+class ModelRegister(BaseStateModel):
     username: Optional[str] = None
     phone_number: Optional[str] = None
     password: Optional[str] = None
@@ -19,18 +20,9 @@ class ModelRegister(BaseModel):
     is_required_captcha: Optional[bool] = False
     fill_captcha: Optional[str] = None
 
-    def __init__(self, state: FSMContext = None, auto_save: bool = True, **data):
-        super().__init__(**data)
-        self._state = state
-        self._auto_save = auto_save
-
-    def _auto_save_if_enabled(self):
-        if self._auto_save and self._state:
-            asyncio.create_task(self._save_to_state())
-
-    async def _save_to_state(self):
-        if self._state:
-            await self._state.update_data(register=self.model_dump_json())
+    def _get_state_key(self) -> str:
+        """Override to use 'register' as the state key"""
+        return "register"
 
     def set_username(self, value: str):
         self.username = value

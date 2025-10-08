@@ -1,15 +1,12 @@
-from atexit import register
 from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, KeyboardButton, Message
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiogram.types import CallbackQuery, Message
 
-from config import BotConfig
-from models.model_register import ModelRegister
+from models.model_user import ModelUser
 
 
-class RegisterSessionMiddleware(BaseMiddleware):
+class AuthenticatedSessionMiddleware(BaseMiddleware):
     def __init__(self) -> None:
         pass
 
@@ -26,23 +23,23 @@ class RegisterSessionMiddleware(BaseMiddleware):
         fsm_data = await fsm_context.get_data()
         
         # Check if user has already verified their contact
-        register_model = ModelRegister()
-        state_key = register_model._get_state_key()
-        register_data = fsm_data.get(state_key, False)
+        user_model = ModelUser()
+        state_key = user_model._get_state_key()
+        user_data = fsm_data.get(state_key, False)
         
-        if register_data:
-            register_model = ModelRegister.model_validate_json(register_data)
-            register_model._state = fsm_context
-            register_model._auto_save = True
+        if user_data:
+            user_model = ModelUser.model_validate_json(user_data)
+            user_model._state = fsm_context
+            user_model._auto_save = True
             if isinstance(event, CallbackQuery):
-                register_model.add_message_id(event.message.message_id)
+                user_model.add_message_id(event.message.message_id)
             elif isinstance(event, Message):
-                register_model.add_message_id(event.message_id)
-            data['register_model'] = register_model # Inject the register model into the data
+                user_model.add_message_id(event.message_id)
+            data['user_model'] = user_model
             # User has already verified contact, allow request to continue
             return await handler(event, data)
         
-        await event.answer("Silahkan ulangi proses registrasi dari awal")
+        await event.answer("Sesi telah berakhir, silahkan login kembali")
         await fsm_context.update_data(**{state_key: None})
         return  # Block the handler from executing
         
