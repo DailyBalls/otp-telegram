@@ -1,22 +1,25 @@
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 
-from bot_instance import GuestStates, bot
+from bot_instance import GuestStates, bot, LoggedInStates
 from config import BotConfig
+from handlers.callbacks.callback_auth import callback_auth_clear
+from handlers.commands.cmd_start import cmd_start_authenticated
 from handlers.messages.msg_register import send_confirmation_register_message
-from keyboards.inline import keyboard_register
+from keyboards.inline import keyboard_auth
 from models.model_register import ModelRegister
 from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
+import utils.models as model_utils
 
 async def callback_register_init(callback: types.CallbackQuery, config: BotConfig, state: FSMContext) -> None:    # Check if register data is valid
-    cancel_builder = keyboard_register.register_cancel()
+    await callback.answer("Memulai proses register...")
+
+    await callback_auth_clear(callback, config, state)
+
     fsm_data = await state.get_data()
-    register_data = fsm_data.get("register", False)
-    if register_data:
-        register_model = ModelRegister.model_validate_json(register_data)
-        await register_model.delete_all_messages()
-        await state.update_data(register=None)
+
+    cancel_builder = keyboard_auth.auth_cancel()
 
     api_client = OTPAPIClient(state=state, user_id=callback.from_user.id, base_url=config.otp_host)
     ask_auth = await api_client.ask_auth()
@@ -36,14 +39,6 @@ async def callback_register_init(callback: types.CallbackQuery, config: BotConfi
     register_model.add_message_id((await callback.message.answer("Silahkan kirimkan username", reply_markup=cancel_builder.as_markup())).message_id)
     await state.set_state(GuestStates.register_1_ask_username)
 
-async def callback_register_cancel(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, register_model: ModelRegister = None) -> None:
-    await callback.answer("Register dibatalkan")
-    await bot.delete_message(callback.message.chat.id, callback.message.message_id)
-    if register_model is not None:
-        await register_model.delete_all_messages()
-        return
-    await state.update_data(register=None)
-    return
 
 async def callback_register_edit(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, register_model: ModelRegister) -> None:
     current_state = await state.get_state()
@@ -63,7 +58,7 @@ async def callback_register_edit(callback: types.CallbackQuery, config: BotConfi
         await state.set_state(GuestStates.register_2_edit_password)
     
     elif edit_type == "bank":
-        builder = keyboard_register.bank_selection(register_model.bank_list)
+        builder = keyboard_auth.bank_selection(register_model.bank_list)
         register_model.add_message_id((await callback.message.answer("Silahkan pilih bank", reply_markup=builder.as_markup())).message_id)
         await state.set_state(GuestStates.register_3_edit_bank_name)
     
@@ -77,7 +72,7 @@ async def callback_register_edit(callback: types.CallbackQuery, config: BotConfi
     return
 
 async def callback_register_bank(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, register_model: ModelRegister) -> None:
-    cancel_builder = keyboard_register.register_cancel()
+    cancel_builder = keyboard_auth.auth_cancel()
     current_state = await state.get_state()
 
     if current_state != GuestStates.register_3_ask_bank_name and current_state != GuestStates.register_3_edit_bank_name:
@@ -117,25 +112,28 @@ async def callback_register_confirm_yes(callback: types.CallbackQuery, config: B
     await register_model.delete_all_messages()
 
     await state.update_data(**{register_model._get_state_key(): None}) # Delete the register model from the state
-    await callback.message.answer("Berhasil melakukan registrasi")
-    await callback.answer("Registrasi berhasil")
-
+    print("response from OTP API", submit_registration.data)
     user_model = ModelUser(
         state=state,
         username=register_model.username,
         chat_id=callback.message.chat.id,
         is_authenticated=True,
-        balance=submit_registration.data.get("balance", 0),
+        credit=submit_registration.data.get("credit", 0),
         rank=submit_registration.data.get("rank", "Unranked"),
     )
     await user_model.save_to_state()
-    await callback.message.answer("Berhasil melakukan registrasi")
+    user_model.add_message_id((await callback.message.answer("Berhasil melakukan registrasi")).message_id)
     await callback.answer("Registrasi berhasil")
-    # await callback_register_execute(callback, config, state, register_model)
+    await callback_auth_clear(callback, config, state)
+
+    # Redirect to authenticated /start command
+    await state.set_state(LoggedInStates.main_menu)
+    await cmd_start_authenticated(callback.message, config, state, user_model)
     return
 
 async def callback_register_confirm_no(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, register_model: ModelRegister) -> None:
     await callback.answer("Register dibatalkan")
     await register_model.delete_all_messages()
     await state.update_data(register=None)
+    await callback_auth_clear(callback, config, state)
     return

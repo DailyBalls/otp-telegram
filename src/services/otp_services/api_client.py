@@ -123,7 +123,10 @@ class OTPAPIClient:
             }
             return APIResponse(error_response)
     
-    # Auth endpoints
+    async def logout(self) -> APIResponse:
+        """POST request to /api/v1/telegram/logout"""
+        return await self._make_request("POST", "/api/v1/telegram/logout")
+    
     async def ask_auth(self) -> APIResponse:
         """POST request to /api/v1/telegram/ask-auth"""
         return await self._make_request("POST", "/api/v1/telegram/ask-auth")
@@ -138,8 +141,11 @@ class OTPAPIClient:
 
     async def submit_registration(self, data: Dict[str, Any]) -> APIResponse:
         """POST request to /api/v1/telegram/register"""
-        print(data)
         return await self._make_request("POST", "/api/v1/telegram/register", data)
+
+    async def submit_login(self, data: Dict[str, Any]) -> APIResponse:
+        """POST request to /api/v1/telegram/login"""
+        return await self._make_request("POST", "/api/v1/telegram/login", data)
 
     @authenticated
     async def me(self) -> APIResponse:

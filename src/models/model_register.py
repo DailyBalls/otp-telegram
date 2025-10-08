@@ -20,6 +20,7 @@ class ModelRegister(BaseStateModel):
     is_required_captcha: Optional[bool] = False
     fill_captcha: Optional[str] = None
 
+
     def _get_state_key(self) -> str:
         """Override to use 'register' as the state key"""
         return "register"

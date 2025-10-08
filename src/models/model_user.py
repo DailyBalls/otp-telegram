@@ -9,7 +9,7 @@ from .base_state_model import BaseStateModel
 
 class ModelUser(BaseStateModel):
     username: Optional[str] = None
-    balance: Optional[int] = None
+    credit: Optional[int] = None
     rank: Optional[str] = None
     list_messages_ids: Optional[list[int]] = None
     is_authenticated: Optional[bool] = False
@@ -36,8 +36,4 @@ class ModelUser(BaseStateModel):
 
     async def logout(self) -> None:
         await self.delete_all_messages()
-        self.username = None
-        self.is_authenticated = False
-        self.list_messages_ids = None
-        self.chat_id = None
-        await self.save_to_state()
+        await self.delete_from_state()

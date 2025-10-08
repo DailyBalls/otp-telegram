@@ -1,13 +1,16 @@
+from atexit import register
 from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, KeyboardButton, Message
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
+from config import BotConfig
 from handlers.middlewares.base_model_middleware import BaseModelMiddleware
-from models.model_user import ModelUser
+from models.model_register import ModelRegister
 
 
-class AuthenticatedSessionMiddleware(BaseModelMiddleware):
+class RegisterSessionMiddleware(BaseModelMiddleware):
     def __init__(self) -> None:
         super().__init__()
 
@@ -20,17 +23,15 @@ class AuthenticatedSessionMiddleware(BaseModelMiddleware):
         self.fsm_context = data['state']
         self.data = data
         
-        user_model = await self.load_model(ModelUser, 'user_model')
-        if not user_model:
-            await event.answer("Sesi telah berakhir, silahkan login kembali")
+        register_model = await self.load_model(ModelRegister, 'register_model')
+        if not register_model:
+            await event.answer("Silahkan ulangi proses register")
             return  # Block the handler from executing
                 
         if isinstance(event, CallbackQuery):
-            user_model.add_message_id(event.message.message_id)
+            register_model.add_message_id(event.message.message_id)
         elif isinstance(event, Message):
-            user_model.add_message_id(event.message_id)
+            register_model.add_message_id(event.message_id)
 
         # User has already verified contact, allow request to continue
         return await handler(event, data)
-
-        
