@@ -7,7 +7,7 @@ from .models import APIResponse
 from .decorators import authenticated
 from .exceptions import InvalidSessionError
 from aiogram.fsm.context import FSMContext
-
+from yarl import URL
 
 class OTPAPIClient:
     """Simple OTP API Client with aiohttp"""
@@ -16,7 +16,7 @@ class OTPAPIClient:
         self.telegram_id = user_id
         self.base_url = base_url
         self.state = state
-        self.cookie_jar = None
+        self.cookie_jar = aiohttp.CookieJar()  # Initialize empty cookie jar
         self.headers = {
             "X-Telegram-User-Id": str(self.telegram_id),
             "Content-Type": "application/json",
@@ -46,12 +46,13 @@ class OTPAPIClient:
                 return aiohttp.CookieJar()
             
             cookie_jar = aiohttp.CookieJar()
-            for domain, cookies in cookie_data.items():
-                for cookie_name, cookie_value in cookies.items():
-                    cookie_jar.update_cookies({cookie_name: cookie_value}, domain)
+            for cookie_key, cookie_value in cookie_data.items():
+                cookie_jar.update_cookies({cookie_key: cookie_value}, URL(self.base_url))
             
             return cookie_jar
-        except Exception:
+        except Exception as e:
+            print("Failed to load cookies from state")
+            print(e)
             return aiohttp.CookieJar()
     
     async def _save_cookies_to_state(self, cookie_jar: aiohttp.CookieJar):
@@ -59,11 +60,7 @@ class OTPAPIClient:
         try:
             cookie_data = {}
             for cookie in cookie_jar:
-                # Handle Morsel objects properly
-                domain = getattr(cookie, 'domain', None) or "default"
-                if domain not in cookie_data:
-                    cookie_data[domain] = {}
-                cookie_data[domain][cookie.key] = cookie.value
+                cookie_data[cookie.key] = cookie.value
             
             await self.state.update_data(cookie_jar=cookie_data)
         except Exception as e:
@@ -74,10 +71,10 @@ class OTPAPIClient:
         self.cookie_jar.clear()
         await self.state.update_data(cookie_jar={})
     
-    def _has_required_cookies(self) -> bool:
+    async def _has_required_cookies(self) -> bool:
         """Check if required authentication cookies are present"""
         if not self.cookie_jar:
-            return False
+            self.cookie_jar = await self._load_cookies_from_state()
         
         required_cookies = {'JSESSIONID', 'PLAY_SESSION'}
         cookie_names = {cookie.key for cookie in self.cookie_jar}
@@ -86,7 +83,8 @@ class OTPAPIClient:
     
     async def check_authentication(self) -> bool:
         """Check if user is properly authenticated"""
-        return self._has_required_cookies()
+        # Ensure cookies are loaded from state
+        return await self._has_required_cookies()
     
     async def _make_request(self, method: str, endpoint: str, data: Dict[str, Any] = None, custom_headers: Dict[str, str] = None) -> APIResponse:
         """Make HTTP request and return APIResponse"""
@@ -94,17 +92,17 @@ class OTPAPIClient:
         headers = self.headers.copy()
         if custom_headers:
             headers.update(custom_headers)
+        if not self.cookie_jar:
+            self.cookie_jar = await self._load_cookies_from_state()
         
         try:
-            if self.cookie_jar is None:
-                self.cookie_jar = await self._load_cookies_from_state()
             # Use persistent session with cookie jar
             async with aiohttp.ClientSession(cookie_jar=self.cookie_jar) as session:
                 async with session.request(
                     method=method,
                     url=f"{self.base_url}{endpoint}",
                     headers=headers,
-                    json=data
+                    json=data,
                 ) as response:
                     # Save cookies from response to state
                     await self._save_cookies_to_state(self.cookie_jar)
@@ -121,6 +119,7 @@ class OTPAPIClient:
                 "data": None,
                 "metadata": {}
             }
+            print("error requesting to OTP API", e)
             return APIResponse(error_response)
     
     async def logout(self) -> APIResponse:
@@ -150,4 +149,4 @@ class OTPAPIClient:
     @authenticated
     async def me(self) -> APIResponse:
         """GET request to /api/v1/telegram/me - requires authentication"""
-        return await self._make_request("GET", "/api/v1/telegram/me")
+        return await self._make_request("POST", "/api/v1/telegram/me")

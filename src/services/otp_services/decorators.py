@@ -14,8 +14,9 @@ def authenticated(func: Callable) -> Callable:
     """
     @functools.wraps(func)
     async def wrapper(self, *args, **kwargs):
+        # Ensure cookies are loaded from state before checking        
         # Check if required cookies exist
-        if not self._has_required_cookies():
+        if not await self.check_authentication():
             raise InvalidSessionError("Missing required authentication cookies (JSESSIONID, PLAY_SESSION)")
         
         return await func(self, *args, **kwargs)
