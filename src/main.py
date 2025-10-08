@@ -23,6 +23,7 @@ import redis.asyncio as redis
 TOKEN = getenv("BOT_TOKEN")
 WHITELIST_MODE = str(getenv("WHITELIST_MODE")).lower() == "true"
 SERVER_NAME = getenv("SERVER_NAME")
+OTP_HOST = getenv("OTP_HOST")
 WHITELIST_IDS = [ 
     
 ]
@@ -42,21 +43,22 @@ async def main() -> None:
     print("Redis Engine Ready! Vroom. Vroom.")
     redis_storage = RedisStorage(redis=redis_client)
     
-    config = BotConfig(server_name=SERVER_NAME, whitelist_mode=WHITELIST_MODE, whitelist_ids=WHITELIST_IDS)
+    config = BotConfig(server_name=SERVER_NAME, whitelist_mode=WHITELIST_MODE, whitelist_ids=WHITELIST_IDS, otp_host=OTP_HOST)
 
     dp = Dispatcher(storage=redis_storage)
     dp["config"] = config
 
     register_routers(dp)
-    
+
+    #https://emojicombos.com/ascii-art
     print(f"""
 ⠀      (\__/)
-       (•ㅅ•)      Bot is running...
-    ＿ノヽ ノ＼＿      using polling.
+       (•ㅅ•)      System is running...
+    ＿ノヽ ノ＼＿      using polling method.
  `/ `/ ⌒Ｙ⌒ Ｙ  ヽ     with redis storage.
  (  (三ヽ人　 /　|
  | ﾉ⌒＼ ￣￣ヽ  ノ
- ヽ＿＿＿＞､＿_／       Meoww..
+ ヽ＿＿＿＞､＿_／       Meoww.. *** I'm a catto !!! ***
      ｜( 王 ﾉ〈    (\__/)
      / ﾐ`ー―彡 \   (•ㅅ•)
     /  ╰    ╯   \  /    \>

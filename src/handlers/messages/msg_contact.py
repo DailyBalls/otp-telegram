@@ -7,7 +7,6 @@ from config import BotConfig
 async def msg_contact(msg: types.Message, config: BotConfig, state: FSMContext) -> None:
     
     contact = msg.contact
-    user_id = msg.from_user.id
     username = msg.from_user.username
 
     if contact is None:
@@ -23,9 +22,10 @@ async def msg_contact(msg: types.Message, config: BotConfig, state: FSMContext) 
     await msg.answer(
 f"""✅ <b>Contact Verified Successfully!</b>
 Terima kasih{", " + username if username else ""}!
-Kami memiliki informasi kontak Anda:
 📱 Phone: +{stored_phone}
 👤 Name: {stored_name}
 
 Mohon tunggu, kami sedang mengambil informasi akun Anda dari server kami.""")
+
+
 
