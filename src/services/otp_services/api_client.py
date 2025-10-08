@@ -4,6 +4,8 @@ Simple OTP API Client
 import aiohttp
 from typing import Dict, Any, Optional
 from .models import APIResponse
+from .decorators import authenticated
+from .exceptions import InvalidSessionError
 from aiogram.fsm.context import FSMContext
 
 
@@ -72,6 +74,20 @@ class OTPAPIClient:
         self.cookie_jar.clear()
         await self.state.update_data(cookie_jar={})
     
+    def _has_required_cookies(self) -> bool:
+        """Check if required authentication cookies are present"""
+        if not self.cookie_jar:
+            return False
+        
+        required_cookies = {'JSESSIONID', 'PLAY_SESSION'}
+        cookie_names = {cookie.key for cookie in self.cookie_jar}
+        
+        return required_cookies.issubset(cookie_names)
+    
+    async def check_authentication(self) -> bool:
+        """Check if user is properly authenticated"""
+        return self._has_required_cookies()
+    
     async def _make_request(self, method: str, endpoint: str, data: Dict[str, Any] = None, custom_headers: Dict[str, str] = None) -> APIResponse:
         """Make HTTP request and return APIResponse"""
         # Merge custom headers with default headers
@@ -125,6 +141,7 @@ class OTPAPIClient:
         print(data)
         return await self._make_request("POST", "/api/v1/telegram/register", data)
 
+    @authenticated
     async def me(self) -> APIResponse:
-        """GET request to /api/v1/telegram/me"""
+        """GET request to /api/v1/telegram/me - requires authentication"""
         return await self._make_request("GET", "/api/v1/telegram/me")

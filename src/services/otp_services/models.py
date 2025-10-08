@@ -44,3 +44,13 @@ class APIResponse:
     def get_error_code(self) -> int:
         """Get the error code"""
         return self.error.get('code', 0)
+    
+    @property
+    def is_authentication_error(self) -> bool:
+        """Check if the response is an authentication error (HTTP Status Code: 401)"""
+        return self.error.get('code') == 401
+    
+    @property
+    def is_session_expired(self) -> bool:
+        """Check if the session has expired (HTTP Status Code: 401 and session expired message is in the error message)"""
+        return self.error.get('code') == 401 and 'session' in self.get_error_message().lower()
