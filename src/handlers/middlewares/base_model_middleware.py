@@ -20,7 +20,7 @@ class BaseModelMiddleware(BaseMiddleware):
     ) -> BaseStateModel | None:
         """Load model from FSM state with auto-save enabled"""
         # Get FSM data
-        model_data = await model_utils.load_model(model_class, self.fsm_context, data_key)
+        model_data = await model_utils.load_model(model_class, self.fsm_context)
         
         if model_data:
             # Store in handler data
