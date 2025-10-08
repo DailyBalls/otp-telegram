@@ -6,6 +6,7 @@ from config import BotConfig
 from handlers.messages.msg_register import send_confirmation_register_message
 from keyboards.inline import keyboard_register
 from models.model_register import ModelRegister
+from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 
 async def callback_register_init(callback: types.CallbackQuery, config: BotConfig, state: FSMContext) -> None:    # Check if register data is valid
@@ -25,11 +26,13 @@ async def callback_register_init(callback: types.CallbackQuery, config: BotConfi
         return
  
     await callback.answer("Memulai proses register...")
-    register_model = ModelRegister(state=state)
-    register_model.set_chat_id(callback.message.chat.id)
-    register_model.set_bank_list(ask_auth.data.get("bank_list", []))
-    register_model.set_is_required_captcha(ask_auth.data.get("captcha", False))
-    register_model.set_phone_number(fsm_data.get("contact_phone", None))
+    register_model = ModelRegister(
+        state=state,
+        chat_id=callback.message.chat.id,
+        bank_list=ask_auth.data.get("bank_list", []),
+        is_required_captcha=ask_auth.data.get("captcha", False),
+        phone_number=fsm_data.get("contact_phone", None),
+    )
     register_model.add_message_id((await callback.message.answer("Silahkan kirimkan username", reply_markup=cancel_builder.as_markup())).message_id)
     await state.set_state(GuestStates.register_1_ask_username)
 
@@ -112,7 +115,20 @@ async def callback_register_confirm_yes(callback: types.CallbackQuery, config: B
         print("There is an error when submitting registration to OTP API", submit_registration.error, submit_registration.metadata)
         return
     await register_model.delete_all_messages()
-    await state.update_data(register=None)
+
+    await state.update_data(**{register_model._get_state_key(): None}) # Delete the register model from the state
+    await callback.message.answer("Berhasil melakukan registrasi")
+    await callback.answer("Registrasi berhasil")
+
+    user_model = ModelUser(
+        state=state,
+        username=register_model.username,
+        chat_id=callback.message.chat.id,
+        is_authenticated=True,
+        balance=submit_registration.data.get("balance", 0),
+        rank=submit_registration.data.get("rank", "Unranked"),
+    )
+    await user_model.save_to_state()
     await callback.message.answer("Berhasil melakukan registrasi")
     await callback.answer("Registrasi berhasil")
     # await callback_register_execute(callback, config, state, register_model)

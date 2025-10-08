@@ -44,3 +44,8 @@ class BaseStateModel(BaseModel):
     async def save_to_state(self):
         """Manually save to state (bypasses auto-save flag)"""
         await self._save_to_state()
+
+    async def delete_from_state(self):
+        """Delete the model from the state"""
+        if self._state:
+            await self._state.update_data(**{self._get_state_key(): None})

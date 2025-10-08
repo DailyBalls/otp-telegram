@@ -20,20 +20,18 @@ class RegisterSessionMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         # Check if FSM context is available
-        fsm_context: FSMContext = data['state']
+        fsm_state: FSMContext = data['state']
         
         # Get current FSM data
-        fsm_data = await fsm_context.get_data()
+        fsm_data = await fsm_state.get_data()
         
-        # Check if user has already verified their contact
         register_model = ModelRegister()
+        register_model._state = fsm_state
         state_key = register_model._get_state_key()
         register_data = fsm_data.get(state_key, False)
         
         if register_data:
             register_model = ModelRegister.model_validate_json(register_data)
-            register_model._state = fsm_context
-            register_model._auto_save = True
             if isinstance(event, CallbackQuery):
                 register_model.add_message_id(event.message.message_id)
             elif isinstance(event, Message):
@@ -43,6 +41,6 @@ class RegisterSessionMiddleware(BaseMiddleware):
             return await handler(event, data)
         
         await event.answer("Silahkan ulangi proses registrasi dari awal")
-        await fsm_context.update_data(**{state_key: None})
+        await register_model.delete_from_state()
         return  # Block the handler from executing
         
