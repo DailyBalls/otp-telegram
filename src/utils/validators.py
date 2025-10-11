@@ -72,3 +72,37 @@ def max_length(value: str|int, max_length: int) -> bool:
     if not isinstance(value, str|int):
         return False
     return len(str(value)) <= max_length
+
+def int_min(value: str|int, min_value: int) -> bool:
+    """
+    Checks if the given integer is at least the minimum value.
+
+    Args:
+        value (str|int): The integer to check.
+        min_value (int): The minimum value.
+
+    Returns:
+        bool: True if the integer is at least the minimum value, False otherwise.
+    """
+    if not isinstance(value, str|int):
+        return False
+    if isinstance(value, str) and not numeric(value):
+        return False
+    return int(value) >= min_value
+
+def int_max(value: str|int, max_value: int) -> bool:
+    """
+    Checks if the given integer is at most the maximum value.
+
+    Args:
+        value (str|int): The integer to check.
+        max_value (int): The maximum value.
+
+    Returns:
+        bool: True if the integer is at most the maximum value, False otherwise.
+    """
+    if not isinstance(value, str|int):
+        return False
+    if isinstance(value, str) and not numeric(value):
+        return False
+    return int(value) <= max_value

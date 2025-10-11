@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from bot_instance import GuestStates, bot
 from config import BotConfig
 from handlers.messages.msg_register import send_confirmation_register_message
-from keyboards.inline import keyboard_auth
+from keyboards.inline import keyboard_guest
 from models.model_login import ModelLogin
 from models.model_register import ModelRegister
 from models.model_user import ModelUser

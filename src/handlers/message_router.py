@@ -2,12 +2,14 @@ from aiogram import Router, types
 from aiogram import F 
 from aiogram.filters import MagicData
 
-from bot_instance import GuestStates
+from bot_instance import GuestStates, LoggedInStates
 from handlers.messages.msg_login import msg_login_1_ask_credentials
 from handlers.messages.msg_contact import msg_contact
+from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddleware
 from handlers.middlewares.verify_contact import VerifyContactMiddleware
 from handlers.middlewares.register_middleware import RegisterSessionMiddleware
 from handlers.messages.msg_register import msg_register_1_username, msg_register_2_password, msg_register_3_bank_name, msg_register_4_bank_account_name, msg_register_5_bank_account_number
+from handlers.messages.msg_deposit import msg_deposit_ask_amount
 
 
 message_router = Router()
@@ -35,3 +37,8 @@ login_router = Router()
 login_router.message.register(msg_login_1_ask_credentials, GuestStates.login_1_ask_credentials)
 message_router.include_router(login_router)
 # message_router.message.register(msg_register_6_confirm_register, GuestStates.register_6_ask_confirm_register)
+
+authenticated_only_router = Router()
+authenticated_only_router.message.middleware(AuthenticatedSessionMiddleware())
+message_router.include_router(authenticated_only_router)
+authenticated_only_router.message.register(msg_deposit_ask_amount, LoggedInStates.deposit_ask_amount)

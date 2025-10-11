@@ -150,3 +150,8 @@ class OTPAPIClient:
     async def me(self) -> APIResponse:
         """GET request to /api/v1/telegram/me - requires authentication"""
         return await self._make_request("POST", "/api/v1/telegram/me")
+
+    @authenticated
+    async def deposit_payment_channel(self) -> APIResponse:
+        """POST request to /api/v1/telegram/deposiy-payment-channel"""
+        return await self._make_request("POST", "/api/v1/telegram/bank/deposit-payment-channel")

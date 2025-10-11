@@ -23,18 +23,18 @@ async def cmd_start_authenticated(msg: types.Message, config: BotConfig, state: 
     """Process the `start` command for authenticated users"""
 
     builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text="Deposit (On Progress)", callback_data="menu_deposit"))
-    builder.add(InlineKeyboardButton(text="Withdraw (On Progress)", callback_data="menu_withdraw"))
-    builder.add(InlineKeyboardButton(text="Rekening (On Progress)", callback_data="menu_rekening"))
+    builder.add(InlineKeyboardButton(text="Deposit", callback_data="userarea_menu_deposit"))
+    builder.add(InlineKeyboardButton(text="Withdraw (Segera Hadir)", callback_data="menu_withdraw"))
+    builder.add(InlineKeyboardButton(text="Rekening (Segera Hadir)", callback_data="menu_rekening"))
     builder.add(InlineKeyboardButton(text="Logout", callback_data="logout"))
 
     play_menu_builder = InlineKeyboardBuilder()
-    play_menu_builder.add(InlineKeyboardButton(text="Play Slot (On Progress)", callback_data="menu_play_slot"))
-    play_menu_builder.add(InlineKeyboardButton(text="Play Casino (On Progress)", callback_data="menu_play_casino"))
-    play_menu_builder.add(InlineKeyboardButton(text="Play Sports (On Progress)", callback_data="menu_play_sports"))
-    play_menu_builder.add(InlineKeyboardButton(text="Play Sabung (On Progress)", callback_data="menu_play_sabung"))
-    play_menu_builder.add(InlineKeyboardButton(text="Play Arcade (On Progress)", callback_data="menu_play_arcade"))
-    play_menu_builder.add(InlineKeyboardButton(text="Play Interactive (On Progress)", callback_data="menu_play_interactive"))
+    play_menu_builder.add(InlineKeyboardButton(text="Play Slot (Segera Hadir)", callback_data="menu_play_slot"))
+    play_menu_builder.add(InlineKeyboardButton(text="Play Casino (Segera Hadir)", callback_data="menu_play_casino"))
+    play_menu_builder.add(InlineKeyboardButton(text="Play Sports (Segera Hadir)", callback_data="menu_play_sports"))
+    play_menu_builder.add(InlineKeyboardButton(text="Play Sabung (Segera Hadir)", callback_data="menu_play_sabung"))
+    play_menu_builder.add(InlineKeyboardButton(text="Play Arcade (Segera Hadir)", callback_data="menu_play_arcade"))
+    play_menu_builder.add(InlineKeyboardButton(text="Play Interactive (Segera Hadir)", callback_data="menu_play_interactive"))
     play_menu_builder.adjust(1)  # One button per row
 
     builder.attach(play_menu_builder)

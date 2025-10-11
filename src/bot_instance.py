@@ -25,6 +25,11 @@ class GuestStates(StatesGroup):
 class LoggedInStates(StatesGroup):
     
     main_menu = State()
+    deposit_ask_amount = State()
+    deposit_ask_channel = State()
+    deposit_ask_channel_payment_gateway = State()
+    deposit_confirm = State()
+    
 
 bot = Bot(
     token=str(getenv("BOT_TOKEN")),

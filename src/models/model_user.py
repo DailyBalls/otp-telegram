@@ -6,14 +6,19 @@ from aiogram import types
 from bot_instance import bot
 from contextlib import suppress
 from .base_state_model import BaseStateModel
+from .model_deposit import DepositChannel
 
 class ModelUser(BaseStateModel):
     username: Optional[str] = None
-    credit: Optional[int] = None
+    credit: Optional[str] = None
     rank: Optional[str] = None
+    min_deposit: Optional[int] = None
+    max_deposit: Optional[int] = None
     list_messages_ids: Optional[list[int]] = None
     is_authenticated: Optional[bool] = False
     chat_id: Optional[int] = None
+    deposit_amount: Optional[str] = None
+    deposit_channels: Optional[list[DepositChannel]] = None
 
     def _get_state_key(self) -> str:
         """Override to use 'user' as the state key"""
@@ -29,6 +34,18 @@ class ModelUser(BaseStateModel):
         self.username = value
         self._auto_save_if_enabled()
 
+    def set_credit(self, value: str):
+        self.credit = value
+        self._auto_save_if_enabled()
+    
+    def set_rank(self, value: str):
+        self.rank = value
+        self._auto_save_if_enabled()
+    
+    def set_deposit_amount(self, value: str):
+        self.deposit_amount = value
+        self._auto_save_if_enabled()
+
     async def delete_all_messages(self) -> None:
         if self.list_messages_ids is not None:
             with suppress(Exception):
@@ -37,3 +54,19 @@ class ModelUser(BaseStateModel):
     async def logout(self) -> None:
         await self.delete_all_messages()
         await self.delete_from_state()
+
+    def set_deposit_channels(self, data: list[DepositChannel]) -> None:
+        self.deposit_channels = data
+        self._auto_save_if_enabled()
+
+    def get_deposit_channels_by_type(self, type: str) -> list[DepositChannel]:
+        if self.deposit_channels is None:
+            return []
+        return [channel for channel in self.deposit_channels if channel.type == type]
+
+
+class DepositChannel(BaseStateModel):
+    name: Optional[str] = None
+    type: Optional[str] = None
+    code: Optional[str] = None
+    description: Optional[str] = None

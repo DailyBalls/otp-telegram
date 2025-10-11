@@ -11,7 +11,7 @@ from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 import utils.validators as validators
 from bot_instance import GuestStates, LoggedInStates
-from keyboards.inline import keyboard_auth
+from keyboards.inline import keyboard_guest
 import utils.models as model_utils
 from handlers.commands.cmd_start import cmd_start_authenticated
 
@@ -23,7 +23,7 @@ async def msg_login_1_ask_credentials(msg: types.Message, config: BotConfig, sta
 
     login_model.add_message_id(msg.message_id)
 
-    cancel_builder = keyboard_auth.auth_cancel()
+    cancel_builder = keyboard_guest.auth_cancel()
     if msg.text is None:
         login_model.add_message_id((await msg.answer("Silahkan kirimkan username dan password dengan format: username:password", reply_markup=cancel_builder.as_markup())).message_id)
         return
@@ -44,14 +44,11 @@ async def msg_login_1_ask_credentials(msg: types.Message, config: BotConfig, sta
                     login_model.add_message_id((await msg.answer(f"Validasi Error: {error}")).message_id)
         return
 
-    print("response from OTP API", response.data)
     user_model = ModelUser(
+        **response.data,
         state=state,
-        username=username,
         chat_id=msg.chat.id,
         is_authenticated=True,
-        credit=response.data.get("credit", 0),
-        rank=response.data.get("rank", "Unranked"),
     )
     await user_model.save_to_state()
     await state.set_state(LoggedInStates.main_menu)

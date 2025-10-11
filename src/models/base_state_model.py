@@ -49,3 +49,9 @@ class BaseStateModel(BaseModel):
         """Delete the model from the state"""
         if self._state:
             await self._state.update_data(**{self._get_state_key(): None})
+
+    async def fill_from_dict(self, data: dict):
+        """Fill the model from a dictionary"""
+        for key, value in data.items():
+            setattr(self, key, value)
+        self._auto_save_if_enabled()

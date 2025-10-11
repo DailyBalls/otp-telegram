@@ -4,10 +4,13 @@ from aiogram.filters import Filter, MagicData
 from aiogram.types import Message
 from aiogram.types.callback_query import CallbackQuery
 
+from handlers.callbacks.callback_deposit import callback_deposit_ask_channel
 from handlers.callbacks.callback_logout import callback_logout
 from handlers.callbacks.callback_login import callback_login
 from handlers.callbacks.callback_register import callback_register_init, callback_register_bank, callback_register_edit, callback_auth_clear, callback_register_confirm_yes, callback_register_confirm_no
 from handlers.middlewares.register_middleware import RegisterSessionMiddleware
+from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddleware
+from handlers.callbacks.callback_userarea_menu import callback_userarea_menu_deposit
 
 class Text(Filter):
     def __init__(self, data: str) -> None:
@@ -36,3 +39,10 @@ register_router.callback_query.register(callback_register_bank, TextPrefix(prefi
 register_router.callback_query.register(callback_register_confirm_yes, Text(data="register_confirm_yes"))
 register_router.callback_query.register(callback_auth_clear, Text(data="register_confirm_no"))
 callback_router.include_router(register_router)
+
+logged_in_router = Router()
+logged_in_router.callback_query.middleware(AuthenticatedSessionMiddleware())
+logged_in_router.callback_query.register(callback_userarea_menu_deposit, Text(data="userarea_menu_deposit"))
+logged_in_router.callback_query.register(callback_deposit_ask_channel, TextPrefix(prefix="deposit_ask_channel_"))
+# logged_in_router.callback_query.register(callback_deposit_ask_pg_channel, TextPrefix(prefix="deposit_ask_pg_channel_"))
+callback_router.include_router(logged_in_router)
