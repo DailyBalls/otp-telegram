@@ -1,13 +1,21 @@
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 
-from bot_instance import GuestStates
+from bot_instance import GuestStates, bot
 from config import BotConfig
 from handlers.callbacks.callback_auth import callback_auth_clear
 from models.model_login import ModelLogin
+from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
+import utils.models as model_utils
 
 async def callback_login(callback: types.CallbackQuery, config: BotConfig, state: FSMContext) -> None:
+    user_model = await model_utils.load_model(ModelUser, state)
+    if user_model is not None:
+        await callback.answer("Silahkan logout terlebih dahulu")
+        await bot.delete_message(callback.message.chat.id, callback.message.message_id)
+        return
+
     await callback.answer("Memulai proses login...")
 
     await callback_auth_clear(callback, config, state)

@@ -25,7 +25,7 @@ WHITELIST_MODE = str(getenv("WHITELIST_MODE")).lower() == "true"
 SERVER_NAME = getenv("SERVER_NAME")
 OTP_HOST = getenv("OTP_HOST")
 WHITELIST_IDS = [ 
-    
+    7957553101
 ]
 
 

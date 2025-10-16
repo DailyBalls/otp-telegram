@@ -5,12 +5,6 @@ from config import BotConfig
 
 async def cmd_unbind(msg: types.Message, state: FSMContext, config: BotConfig) -> None:
     """Process the `start` command"""
-     # Check if FSM context is available
-    
-    if state is None:
-        await msg.answer("Error: FSM context not available")
-        return
-    
     await msg.answer("Unbinding...")
 
     contact_data = {
@@ -22,5 +16,6 @@ async def cmd_unbind(msg: types.Message, state: FSMContext, config: BotConfig) -
     
     # Save contact data to FSM storage
     await state.update_data(**contact_data)
+    await state.clear()
 
     await msg.answer("Unbinding successful")

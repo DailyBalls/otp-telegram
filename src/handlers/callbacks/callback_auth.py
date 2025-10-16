@@ -11,7 +11,7 @@ from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 import utils.models as model_utils
 
-async def callback_auth_clear(callback: types.CallbackQuery, config: BotConfig, state: FSMContext) -> None:
+async def callback_auth_clear(config: BotConfig, state: FSMContext) -> None:
     login_model: ModelLogin | None = await model_utils.load_model(ModelLogin, state)
     if login_model:
         await login_model.delete_all_messages()

@@ -106,3 +106,21 @@ def int_max(value: str|int, max_value: int) -> bool:
     if isinstance(value, str) and not numeric(value):
         return False
     return int(value) <= max_value
+
+def int_between(value: str|int, min_value: int, max_value: int) -> bool:
+    """
+    Checks if the given integer is between the minimum and maximum values.
+
+    Args:
+        value (str|int): The integer to check.
+        min_value (int): The minimum value.
+        max_value (int): The maximum value.
+
+    Returns:
+        bool: True if the integer is between the minimum and maximum values, False otherwise.
+    """
+    if not isinstance(value, str|int):
+        return False
+    if isinstance(value, str) and not numeric(value):
+        return False
+    return int(value) >= min_value and int(value) <= max_value

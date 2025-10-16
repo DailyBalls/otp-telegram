@@ -11,17 +11,18 @@ import utils.validators as validators
 from bot_instance import LoggedInStates
 from keyboards.inline import keyboard_guest
 import utils.models as model_utils
-from handlers.callbacks.callback_deposit import ask_payment_method
 
-async def msg_deposit_ask_amount(msg: types.Message, config: BotConfig, state: FSMContext, user_model: ModelUser) -> None:
+async def msg_withdraw_ask_amount(msg: types.Message, config: BotConfig, state: FSMContext, user_model: ModelUser) -> None:
     action_model: ModelAction | None = await model_utils.load_model(ModelAction, state)
     if action_model is None:
-        await msg.answer("Silahkan ulangi proses deposit")
+        reply = await msg.answer("Silahkan ulangi proses withdraw")
+        action_model.add_message_id(reply.message_id)
+        user_model.add_message_id(reply.message_id)
         return
     
     action_model.add_message_id(msg.message_id)
     user_model.add_message_id(msg.message_id)
     
-    await ask_payment_method(msg.text, state, user_model, action_model)
+    
 
     return

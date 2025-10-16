@@ -13,7 +13,7 @@ import utils.validators as validators
 from bot_instance import GuestStates, LoggedInStates
 from keyboards.inline import keyboard_guest
 import utils.models as model_utils
-from handlers.commands.cmd_start import cmd_start_authenticated
+from handlers.commands.cmd_action import cmd_start_authenticated
 
 async def msg_login_1_ask_credentials(msg: types.Message, config: BotConfig, state: FSMContext) -> None:
     login_model = await model_utils.load_model(ModelLogin, state)

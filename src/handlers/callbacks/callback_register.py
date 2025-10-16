@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from bot_instance import GuestStates, bot, LoggedInStates
 from config import BotConfig
 from handlers.callbacks.callback_auth import callback_auth_clear
-from handlers.commands.cmd_start import cmd_start_authenticated
+from handlers.commands.cmd_action import cmd_start_authenticated
 from handlers.messages.msg_register import send_confirmation_register_message
 from keyboards.inline import keyboard_guest
 from models.model_register import ModelRegister
@@ -12,10 +12,17 @@ from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 import utils.models as model_utils
 
+async def __callback_register_init(callback: types.CallbackQuery, config: BotConfig, state: FSMContext) -> None: 
+    user_model = await model_utils.load_model(ModelUser, state)
+    if user_model is not None:
+        await callback.answer("Silahkan logout terlebih dahulu")
+        await bot.delete_message(callback.message.chat.id, callback.message.message_id)
+        return
+
 async def callback_register_init(callback: types.CallbackQuery, config: BotConfig, state: FSMContext) -> None:    # Check if register data is valid
     await callback.answer("Memulai proses register...")
 
-    await callback_auth_clear(callback, config, state)
+    await callback_auth_clear(config, state)
 
     fsm_data = await state.get_data()
 

@@ -10,7 +10,7 @@ from services.otp_services.exceptions import InvalidSessionError
 from services.otp_services.models import APIResponse
 import utils.fsm as fsm_utils
 from bot_instance import GuestStates
-from handlers.commands.cmd_start import cmd_start_unauthenticated
+from handlers.commands.cmd_action import cmd_start_unauthenticated
 
 
 class AuthenticatedSessionMiddleware(BaseModelMiddleware):
@@ -39,13 +39,16 @@ class AuthenticatedSessionMiddleware(BaseModelMiddleware):
                 raise InvalidSessionError()
             if(response.data is None):
                 print("response from OTP API is None")
+                print(response, response.is_error, response.is_authentication_error, response.is_session_expired)
                 return
             await user_model.fill_from_dict(response.data)
             
             if isinstance(event, CallbackQuery):
                 user_model.add_message_id(event.message.message_id)
+                await user_model.save_to_state()
             elif isinstance(event, Message):
                 user_model.add_message_id(event.message_id)
+                await user_model.save_to_state()
 
             data['api_client'] = api_client
 
@@ -53,7 +56,12 @@ class AuthenticatedSessionMiddleware(BaseModelMiddleware):
             return await handler(event, data)
         
         except InvalidSessionError as e:
-            print("InvalidSessionError", e)
+            print("InvalidSessionError")
+            print(e)
+            if user_model:
+                await user_model.logout()
+                await user_model.delete_all_messages()
+                await user_model.delete_from_state()
             await fsm_utils.reset_fsm(self.fsm_context)
             await event.answer("Sesi telah berakhir, silahkan login kembali")
             await self.fsm_context.set_state(state=None)

@@ -1,6 +1,7 @@
 from aiogram import Router, types
 from aiogram import F 
 from aiogram.filters import MagicData
+from aiogram.filters.logic import and_f
 
 from bot_instance import GuestStates, LoggedInStates
 from handlers.messages.msg_login import msg_login_1_ask_credentials
@@ -10,17 +11,22 @@ from handlers.middlewares.verify_contact import VerifyContactMiddleware
 from handlers.middlewares.register_middleware import RegisterSessionMiddleware
 from handlers.messages.msg_register import msg_register_1_username, msg_register_2_password, msg_register_3_bank_name, msg_register_4_bank_account_name, msg_register_5_bank_account_number
 from handlers.messages.msg_deposit import msg_deposit_ask_amount
+from handlers.messages.msg_game import msg_game_search
+from handlers.messages.msg_withdraw import msg_withdraw_ask_amount
 
+from utils.filters import StatesGroup
 
 message_router = Router()
+message_router.message.filter(~F.text.startswith("/"))
+message_router.message.register(msg_contact, F.contact)
 
 # Add contact verification middleware to all message handlers
 message_router.message.middleware(VerifyContactMiddleware())
 
 # Contact message handler
 register_router = Router()
+register_router.message.filter(StatesGroup(GuestStates))
 register_router.message.middleware(RegisterSessionMiddleware())
-register_router.message.register(msg_contact, F.contact)
 register_router.message.register(msg_register_1_username, GuestStates.register_1_ask_username)
 register_router.message.register(msg_register_1_username, GuestStates.register_1_edit_username)
 register_router.message.register(msg_register_2_password, GuestStates.register_2_ask_password)
@@ -40,5 +46,7 @@ message_router.include_router(login_router)
 
 authenticated_only_router = Router()
 authenticated_only_router.message.middleware(AuthenticatedSessionMiddleware())
-message_router.include_router(authenticated_only_router)
 authenticated_only_router.message.register(msg_deposit_ask_amount, LoggedInStates.deposit_ask_amount)
+authenticated_only_router.message.register(msg_game_search, LoggedInStates.game_search)
+authenticated_only_router.message.register(msg_withdraw_ask_amount, LoggedInStates.withdraw_ask_amount)
+message_router.include_router(authenticated_only_router)

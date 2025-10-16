@@ -26,10 +26,16 @@ class LoggedInStates(StatesGroup):
     
     main_menu = State()
     deposit_ask_amount = State()
-    deposit_ask_channel = State()
+    deposit_ask_method = State()
     deposit_ask_channel_payment_gateway = State()
     deposit_confirm = State()
+    deposit_confirm_channel = State()
     
+    withdraw_ask_amount = State()
+    
+    game_search = State()
+
+
 
 bot = Bot(
     token=str(getenv("BOT_TOKEN")),

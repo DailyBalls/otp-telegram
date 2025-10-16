@@ -155,3 +155,29 @@ class OTPAPIClient:
     async def deposit_payment_channel(self) -> APIResponse:
         """POST request to /api/v1/telegram/deposiy-payment-channel"""
         return await self._make_request("POST", "/api/v1/telegram/bank/deposit-payment-channel")
+
+    async def list_games(self, game_type: str, page: int = 1) -> APIResponse:
+        """GET request to /api/v1/telegram/game"""
+        return await self._make_request("GET", f"/api/v1/telegram/game/{game_type}?page={page}")
+
+    @authenticated
+    async def get_game_url(self, game_code: str, provider_id: str) -> APIResponse:
+        """POST request to /api/v1/telegram/game/launch"""
+        data = {
+            "game_code": game_code,
+            "provider_id": provider_id
+        }
+        return await self._make_request("POST", f"/api/v1/telegram/game/launch", data)
+
+    @authenticated
+    async def list_rekening(self) -> APIResponse:
+        """GET request to /api/v1/telegram/me/rekening"""
+        return await self._make_request("GET", "/api/v1/telegram/me/rekening")
+
+    @authenticated
+    async def search_games(self, search_query: str, page: int = 1) -> APIResponse:
+        """POST request to /api/v1/telegram/game/search"""
+        data = {
+            "search": search_query
+        }
+        return await self._make_request("POST", f"/api/v1/telegram/game/search?page={page}", data)
