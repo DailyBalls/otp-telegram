@@ -73,7 +73,7 @@ async def callback_game_generate_launch(callback: types.CallbackQuery, config: B
     builder.add(InlineKeyboardButton(text=f"{game_name} 🔗", url=game_url))
     builder.adjust(1)
     user_model.add_message_id((await callback.message.answer("Silahkan click tombol di bawah untuk membuka game", reply_markup=builder.as_markup())).message_id)
-    user_model.save_to_state()
+    await user_model.save_to_state()
     return
 
 async def _game_search(user_model: ModelUser, search_base64: str, page: int, api_client: OTPAPIClient, chat_id: int, message_id: int = None) -> None:

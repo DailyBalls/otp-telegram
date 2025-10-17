@@ -1,5 +1,6 @@
 from aiogram import types
 from aiogram.fsm.context import FSMContext
+from aiogram.types.message import Message
 
 from bot_instance import GuestStates, bot
 from config import BotConfig
@@ -8,6 +9,29 @@ from models.model_login import ModelLogin
 from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 import utils.models as model_utils
+
+async def __callback_login_init(callback: types.CallbackQuery | Message, config: BotConfig, state: FSMContext):
+    login_model = await model_utils.load_model(ModelLogin, state)
+
+    chat_id: int | None = None
+    if isinstance(callback, types.CallbackQuery):
+        if login_model is not None:
+            callback.answer("Silahkan logout terlebih dahulu")
+            return
+        chat_id = callback.message.chat.id
+        await callback.answer("Memulai proses login...")
+
+    elif isinstance(callback, Message):
+        if login_model is not None:
+            await callback.reply("Silahkan logout terlebih dahulu")
+            return
+        chat_id = callback.chat.id
+
+    
+    if not login_model:
+        login_model = ModelLogin(state=state, chat_id=chat_id)
+        await login_model.save_to_state()
+    return login_model
 
 async def callback_login(callback: types.CallbackQuery, config: BotConfig, state: FSMContext) -> None:
     user_model = await model_utils.load_model(ModelUser, state)
@@ -18,7 +42,7 @@ async def callback_login(callback: types.CallbackQuery, config: BotConfig, state
 
     await callback.answer("Memulai proses login...")
 
-    await callback_auth_clear(callback, config, state)
+    await callback_auth_clear(config, state)
     
     login_model = ModelLogin(state=state, chat_id=callback.message.chat.id)
     # Initialize API client with user's Telegram ID and OTP host

@@ -9,6 +9,14 @@ from contextlib import suppress
 from models.model_deposit import DepositChannel
 from .base_state_model import BaseStateModel
 
+
+class RekeningAdd(BaseModel):
+    list_active_banks: Optional[list[str]] = None
+    bank_name: Optional[str] = None
+    bank_account_name: Optional[str] = None
+    bank_account_number: Optional[str] = None
+
+
 class ModelUser(BaseStateModel):
     username: Optional[str] = None
     credit: Optional[str] = None
@@ -19,6 +27,7 @@ class ModelUser(BaseStateModel):
     is_authenticated: Optional[bool] = False
     chat_id: Optional[int] = None
     deposit_channels: Optional[list[DepositChannel]] = None
+    temp_rekening_add: Optional[RekeningAdd] = None
 
     def _get_state_key(self) -> str:
         """Override to use 'user' as the state key"""
@@ -68,4 +77,3 @@ class ModelUser(BaseStateModel):
         if self.deposit_channels is None:
             return []
         return [channel for channel in self.deposit_channels if channel.type == type]
-

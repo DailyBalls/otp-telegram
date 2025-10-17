@@ -2,7 +2,8 @@ from aiogram import Router, types
 from aiogram.fsm.context import FSMContext
 from aiogram.types.callback_query import CallbackQuery
 from aiogram.types.inline_keyboard_button import InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types.keyboard_button import KeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
 from bot_instance import bot
 from config import BotConfig
@@ -11,6 +12,7 @@ import utils.models as model_utils
 
 async def cmd_start_unauthenticated(msg: types.Message, config: BotConfig, state: FSMContext) -> None:
     """Process the `start` command for unauthenticated users"""
+    
     builder = InlineKeyboardBuilder()
     builder.add(InlineKeyboardButton(text="Login", callback_data="login"))
     builder.add(InlineKeyboardButton(text="Register", callback_data="register"))
@@ -19,7 +21,7 @@ async def cmd_start_unauthenticated(msg: types.Message, config: BotConfig, state
         chat_id = msg.message.chat.id
     else:
         chat_id = msg.chat.id
-        
+
     await bot.send_message(chat_id, f"""
 Halo <b>{msg.from_user.first_name}</b>!
 Selamat datang di <b>{config.server_name}</b>!

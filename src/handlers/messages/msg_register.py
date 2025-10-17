@@ -11,11 +11,6 @@ from bot_instance import GuestStates
 from keyboards.inline import keyboard_guest
 
 async def msg_register_1_username(msg: types.Message, config: BotConfig, state: FSMContext, register_model: ModelRegister) -> None:
-    cancel_builder = keyboard_guest.auth_cancel()
-    if msg.text is None:
-        register_model.add_message_id((await msg.answer("Silahkan kirimkan username", reply_markup=cancel_builder.as_markup())).message_id)
-        return
-    
     if not validators.alpha_num(msg.text):
         register_model.add_message_id((await msg.answer("Username harus berupa huruf dan angka")).message_id)
         return
@@ -32,12 +27,13 @@ async def msg_register_1_username(msg: types.Message, config: BotConfig, state: 
 
     current_state = await state.get_state()
     if current_state == GuestStates.register_1_ask_username:
-        register_model.add_message_id((await msg.answer("Username berhasil diterima")).message_id)
-        register_model.add_message_id((await msg.answer("Silahkan kirimkan password", reply_markup=cancel_builder.as_markup())).message_id)
+        builder = InlineKeyboardBuilder()
+        builder.add(InlineKeyboardButton(text="Batalkan", callback_data="register_cancel"))
+        register_model.add_message_id((await msg.answer("Silahkan kirimkan password", reply_markup=builder.as_markup())).message_id)
         await state.set_state(GuestStates.register_2_ask_password)
 
     elif current_state == GuestStates.register_1_edit_username:
-        register_model.add_message_id((await msg.answer("Username berhasil dirubah")).message_id)
+        # register_model.add_message_id((await msg.answer("Username berhasil dirubah")).message_id)
         await state.set_state(GuestStates.register_6_ask_confirm_register)
         register_model.add_message_id((await send_confirmation_register_message(msg, register_model)).message_id)
 
@@ -45,16 +41,16 @@ async def msg_register_1_username(msg: types.Message, config: BotConfig, state: 
 
 
 async def msg_register_2_password(msg: types.Message, config: BotConfig, state: FSMContext, register_model: ModelRegister) -> None:
-    cancel_builder = keyboard_guest.auth_cancel()
     if not validators.min_length(msg.text, 6):
-        register_model.add_message_id((await msg.answer("Password harus minimal 6 karakter", reply_markup=cancel_builder.as_markup())).message_id)
+        builder = InlineKeyboardBuilder()
+        register_model.add_message_id((await msg.answer("Password harus minimal 6 karakter")).message_id)
         return
 
     register_model.set_password(msg.text)
 
     current_state = await state.get_state()
     if current_state == GuestStates.register_2_ask_password:
-        register_model.add_message_id((await msg.answer("Password berhasil diterima")).message_id)
+        # register_model.add_message_id((await msg.answer("Password berhasil diterima")).message_id)
         await state.set_state(GuestStates.register_3_ask_bank_name)
         builder = keyboard_guest.bank_selection(register_model.bank_list)
         register_model.add_message_id((await msg.answer("Silahkan pilih bank yang ingin Anda gunakan", reply_markup=builder.as_markup())).message_id)
@@ -68,17 +64,14 @@ async def msg_register_2_password(msg: types.Message, config: BotConfig, state: 
 
 # Handle if user send bank name through message
 async def msg_register_3_bank_name(msg: types.Message, config: BotConfig, state: FSMContext, register_model: ModelRegister) -> None:
-    cancel_builder = keyboard_guest.auth_cancel()
-    if msg.text is None:
-        register_model.add_message_id((await msg.answer("Silahkan kirimkan nama bank", reply_markup=cancel_builder.as_markup())).message_id)
-        return
-    
     register_model.set_bank_name(msg.text)
-    
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="Batalkan", callback_data="register_cancel"))
+
     current_state = await state.get_state()
     if current_state == GuestStates.register_3_ask_bank_name:
         register_model.add_message_id((await msg.answer(f"Bank <b>{register_model.bank_name}</b> berhasil dipilih")).message_id)
-        register_model.add_message_id((await msg.answer("Silahkan kirimkan nama rekening", reply_markup=cancel_builder.as_markup())).message_id)
+        register_model.add_message_id((await msg.answer("Silahkan kirimkan nama rekening", reply_markup=builder.as_markup())).message_id)
         await state.set_state(GuestStates.register_4_ask_bank_account_name)
     elif current_state == GuestStates.register_3_edit_bank_name:
         register_model.add_message_id((await msg.answer(f"Bank <b>{register_model.bank_name}</b> berhasil dirubah")).message_id)
@@ -90,7 +83,6 @@ async def msg_register_3_bank_name(msg: types.Message, config: BotConfig, state:
 
 
 async def msg_register_4_bank_account_name(msg: types.Message, config: BotConfig, state: FSMContext, register_model: ModelRegister) -> None:
-    cancel_builder = keyboard_guest.auth_cancel()
     # Check that the input name contains only letters (including Unicode letters) and spaces
     if not msg.text or not validators.alpha_space(msg.text):
         register_model.add_message_id((await msg.answer("Nama rekening hanya boleh berisi huruf dan spasi. Silakan kirimkan nama rekening yang valid.")).message_id)
@@ -103,11 +95,13 @@ async def msg_register_4_bank_account_name(msg: types.Message, config: BotConfig
     
     current_state = await state.get_state()
     if current_state == GuestStates.register_4_ask_bank_account_name:
-        register_model.add_message_id((await msg.answer("Nama rekening berhasil diterima")).message_id)
-        register_model.add_message_id((await msg.answer("Silahkan kirimkan nomor rekening", reply_markup=cancel_builder.as_markup())).message_id)
+        # register_model.add_message_id((await msg.answer("Nama rekening berhasil diterima")).message_id)
+        builder = InlineKeyboardBuilder()
+        builder.add(InlineKeyboardButton(text="Batalkan", callback_data="register_cancel"))
+        register_model.add_message_id((await msg.answer("Silahkan kirimkan nomor rekening", reply_markup=builder.as_markup())).message_id)
         await state.set_state(GuestStates.register_5_ask_bank_account_number)
     elif current_state == GuestStates.register_4_edit_bank_account_name:
-        register_model.add_message_id((await msg.answer("Nama rekening berhasil dirubah")).message_id)
+        # register_model.add_message_id((await msg.answer("Nama rekening berhasil dirubah")).message_id)
         await state.set_state(GuestStates.register_6_ask_confirm_register)
         register_model.add_message_id((await send_confirmation_register_message(msg, register_model)).message_id)
 
@@ -128,11 +122,11 @@ async def msg_register_5_bank_account_number(msg: types.Message, config: BotConf
 
     current_state = await state.get_state()
     if current_state == GuestStates.register_5_ask_bank_account_number:
-        register_model.add_message_id((await msg.answer("Nomor rekening berhasil diterima")).message_id)
+        # register_model.add_message_id((await msg.answer("Nomor rekening berhasil diterima")).message_id)
         await state.set_state(GuestStates.register_6_ask_confirm_register)
 
     elif current_state == GuestStates.register_5_edit_bank_account_number:
-        register_model.add_message_id((await msg.answer("Nomor rekening berhasil dirubah")).message_id)
+        # register_model.add_message_id((await msg.answer("Nomor rekening berhasil dirubah")).message_id)
         await state.set_state(GuestStates.register_6_ask_confirm_register)
     
     register_model.add_message_id((await send_confirmation_register_message(msg, register_model)).message_id)

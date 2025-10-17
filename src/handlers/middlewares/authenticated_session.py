@@ -2,6 +2,8 @@ from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
+from aiogram.types.keyboard_button import KeyboardButton
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 from handlers.middlewares.base_model_middleware import BaseModelMiddleware
 from models.model_user import ModelUser
@@ -29,7 +31,9 @@ class AuthenticatedSessionMiddleware(BaseModelMiddleware):
 
         api_client = OTPAPIClient(state=self.fsm_context, user_id=event.from_user.id, base_url=data['config'].otp_host)
         try:
-                
+            if user_model is None:
+                raise InvalidSessionError("User model is None")
+
             response: APIResponse = await api_client.me()
             if response.is_authentication_error:
                 if user_model:
@@ -63,7 +67,12 @@ class AuthenticatedSessionMiddleware(BaseModelMiddleware):
                 await user_model.delete_all_messages()
                 await user_model.delete_from_state()
             await fsm_utils.reset_fsm(self.fsm_context)
-            await event.answer("Sesi telah berakhir, silahkan login kembali")
+            menu_builder = ReplyKeyboardBuilder()
+            menu_builder.add(KeyboardButton(text="Login"))
+            menu_builder.add(KeyboardButton(text="Register"))
+            menu_builder.adjust(2)  # One button per row
+
+            await event.answer("Sesi telah berakhir, silahkan login kembali", reply_markup=menu_builder.as_markup(resize_keyboard=True))
             await self.fsm_context.set_state(state=None)
             await cmd_start_unauthenticated(event, data['config'], self.fsm_context)
             return

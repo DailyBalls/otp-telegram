@@ -38,8 +38,8 @@ class BaseStateModel(BaseModel):
             state_key = self._get_state_key()
             await self._state.update_data(**{state_key: self.model_dump_json()})
             # print("Auto-saving model data to state", self._get_state_key())
-            if self._get_state_key() == "action":
-                print(self.model_dump_json())
+            if self._save_task and not self._save_task.done():
+                self._save_task.cancel()
             # print(self.model_dump_json())
 
     def _get_state_key(self) -> str:

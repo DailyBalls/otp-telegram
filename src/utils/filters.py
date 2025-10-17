@@ -20,8 +20,11 @@ class Text(Filter):
     def __init__(self, data: str) -> None:
         self.data = data
 
-    async def __call__(self, callback: CallbackQuery) -> bool:
-        return callback.data == self.data
+    async def __call__(self, callback: CallbackQuery | Message) -> bool:
+        if isinstance(callback, CallbackQuery):
+            return callback.data == self.data
+        elif isinstance(callback, Message):
+            return callback.text.lower() == self.data.lower()
 
 class TextPrefix(Filter):
     def __init__(self, prefix: str) -> None:

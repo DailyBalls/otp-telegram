@@ -1,3 +1,4 @@
+from datetime import datetime
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.types.inline_keyboard_button import InlineKeyboardButton
@@ -191,23 +192,23 @@ async def callback_deposit_confirm_yes(callback: types.CallbackQuery, config: Bo
         await action_model.save_to_state()
     user_model.unset_message_id(callback.message.message_id)
     if deposit_channel_type == "QRIS":
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id, text=f"""
+        await callback.message.delete()
+        await callback.message.answer(f"""
 <b>Segera lakukan pembayaran</b>
-
-<b>Jumlah deposit:</b> {deposit_channel_amount}
-<b>Metode pembayaran:</b> {deposit_channel_type} - {deposit_channel_code}
-<b>Payment Gateway:</b> {deposit_channel_name}
-<b>Waktu Expire:</b> Selasa, 12 Oktober 2025 12:00 WIB
-<b>Reference ID:</b> REF_XXXXXXXXXXXXXXXXX
-<b>Silahkan scan QRIS Berikut:</b>
-""")
+<b>Username:</b> <code>{user_model.username}</code>
+<b>Jumlah deposit:</b> <code>{deposit_channel_amount}</code>
+<b>Metode pembayaran:</b> <code>{deposit_channel_type} - {deposit_channel_code}</code>
+<b>Payment Gateway:</b> <code>{deposit_channel_name}</code>
+<b>Waktu Pembuatan:</b> <code>{datetime.now().strftime("%d %B %Y %H:%M:%S")} WIB</code>
+<b>Waktu Expire:</b> <code>Selasa, 12 Oktober 2025 12:00 WIB</code>
+<b>Reference ID:</b> <code>REF_XXXXXXXXXXXXXXXXX</code>
+<b>Silahkan scan QRIS Berikut:</b>""")
         photo_url = "https://otp.nahbisa.com/images/payment-qr.png"
         await bot.send_photo(chat_id=callback.message.chat.id, photo=photo_url)
     elif deposit_channel_type == "VA":
         await callback.message.answer("Silahkan transfer ke Virtual Account <b>{deposit_channel_code}</b>")
     elif deposit_channel_type == "BANK":
         await callback.message.answer("Silahkan transfer ke Bank <b>{deposit_channel_code}</b>")
-    user_model.unset_message_id(callback.message.message_id)
     
     await action_model.finish_action()
     return

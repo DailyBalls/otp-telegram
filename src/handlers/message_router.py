@@ -1,10 +1,7 @@
 from aiogram import Router, types
 from aiogram import F 
-from aiogram.filters import MagicData
-from aiogram.filters.logic import and_f
 
 from bot_instance import GuestStates, LoggedInStates
-from handlers.messages.msg_login import msg_login_1_ask_credentials
 from handlers.messages.msg_contact import msg_contact
 from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddleware
 from handlers.middlewares.verify_contact import VerifyContactMiddleware
@@ -14,14 +11,21 @@ from handlers.messages.msg_deposit import msg_deposit_ask_amount
 from handlers.messages.msg_game import msg_game_search
 from handlers.messages.msg_withdraw import msg_withdraw_ask_amount
 
-from utils.filters import StatesGroup
+from handlers.multi import multi_authentication
+from utils.filters import StatesGroup, Text
 
 message_router = Router()
 message_router.message.filter(~F.text.startswith("/"))
 message_router.message.register(msg_contact, F.contact)
-
+message_router.message.register(multi_authentication.login_init, Text(data="login"))
+message_router.message.register(multi_authentication.logout, Text(data="logout"))
+message_router.message.register(multi_authentication.register_init, Text(data="register"))
 # Add contact verification middleware to all message handlers
 message_router.message.middleware(VerifyContactMiddleware())
+
+login_router = Router()
+login_router.message.register(multi_authentication.login_submit_credentials, GuestStates.login_1_ask_credentials)
+message_router.include_router(login_router)
 
 # Contact message handler
 register_router = Router()
@@ -39,9 +43,7 @@ register_router.message.register(msg_register_5_bank_account_number, GuestStates
 register_router.message.register(msg_register_5_bank_account_number, GuestStates.register_5_edit_bank_account_number)
 message_router.include_router(register_router)
 
-login_router = Router()
-login_router.message.register(msg_login_1_ask_credentials, GuestStates.login_1_ask_credentials)
-message_router.include_router(login_router)
+
 # message_router.message.register(msg_register_6_confirm_register, GuestStates.register_6_ask_confirm_register)
 
 authenticated_only_router = Router()

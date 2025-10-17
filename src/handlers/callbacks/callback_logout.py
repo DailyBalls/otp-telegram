@@ -11,7 +11,7 @@ async def callback_logout(callback: types.CallbackQuery, config: BotConfig, stat
     logout = await api_client.logout()
     
     # Check if user has already verified their contact
-    user_model = await model_utils.load_model(ModelUser, state)
+    user_model: ModelUser | None = await model_utils.load_model(ModelUser, state)
     if user_model:
         await user_model.logout()
         await user_model.delete_from_state()

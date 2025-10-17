@@ -4,7 +4,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 def registration_confirm_and_edit() -> InlineKeyboardBuilder:
     builder_confirm = InlineKeyboardBuilder()
     builder_confirm.add(InlineKeyboardButton(text="Ya", callback_data="register_confirm_yes"))
-    builder_confirm.add(InlineKeyboardButton(text="Batalkan", callback_data="auth_cancel"))
+    builder_confirm.add(InlineKeyboardButton(text="Batalkan", callback_data="register_cancel"))
     builder_confirm.adjust(2)
 
     builder_edit = InlineKeyboardBuilder()
@@ -19,15 +19,11 @@ def registration_confirm_and_edit() -> InlineKeyboardBuilder:
 
     return builder_confirm
 
-def bank_selection(bank_list: list[str]) -> InlineKeyboardBuilder:
+def bank_selection(bank_list: list[str], show_cancel: bool = True) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     for bank in bank_list:
         builder.add(InlineKeyboardButton(text=bank, callback_data=f"register_bank_{bank}"))
     builder.adjust(2)
-    builder.add(InlineKeyboardButton(text="Batalkan", callback_data="auth_cancel"))
-    return builder
-
-def auth_cancel() -> InlineKeyboardBuilder:
-    builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text="Batalkan", callback_data="auth_cancel"))
+    if show_cancel:
+        builder.add(InlineKeyboardButton(text="Batalkan", callback_data="register_cancel"))
     return builder

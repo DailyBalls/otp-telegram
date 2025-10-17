@@ -4,7 +4,7 @@ async def reset_fsm(state: FSMContext):
      # Get all stored FSM data
     state_data = await state.get_data()
     
-    persistent_data = ["contact_verified"]
+    persistent_data = ["telegram_data"]
 
     temp_data = {}
     for data in persistent_data:
