@@ -13,8 +13,10 @@ from handlers.messages.msg_withdraw import msg_withdraw_ask_amount
 
 from handlers.multi import multi_authentication
 from utils.filters import StatesGroup, Text
+from handlers.middlewares.verify_private_chat import VerifyPrivateChatMiddleware
 
 message_router = Router()
+message_router.message.middleware(VerifyPrivateChatMiddleware())
 message_router.message.filter(~F.text.startswith("/"))
 message_router.message.register(msg_contact, F.contact)
 message_router.message.register(multi_authentication.login_init, Text(data="login"))

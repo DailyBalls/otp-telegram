@@ -11,12 +11,14 @@ from handlers.callbacks.callback_register import callback_register_bank, callbac
 from handlers.callbacks.callback_rekening import callback_rekening_add, callback_rekening_list
 from handlers.middlewares.register_middleware import RegisterSessionMiddleware
 from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddleware
+from handlers.middlewares.verify_private_chat import VerifyPrivateChatMiddleware
 from utils.filters import Text, TextPrefix
 from handlers.middlewares.verify_contact import VerifyContactMiddleware
 from handlers.multi import multi_authentication
 
 
 callback_router = Router()
+callback_router.callback_query.middleware(VerifyPrivateChatMiddleware())
 callback_router.callback_query.middleware(VerifyContactMiddleware())
 callback_router.callback_query.register(multi_authentication.register_init, Text(data="register"))
 callback_router.callback_query.register(multi_authentication.register_cancel, Text(data="register_cancel"))

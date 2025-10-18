@@ -12,9 +12,11 @@ from handlers.middlewares.whitelisted_only import WhitelistedOnlyMiddleware
 from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddleware
 from handlers.multi import multi_authentication
 from utils.filters import StatesGroup
+from handlers.middlewares.verify_private_chat import VerifyPrivateChatMiddleware
 
 
 command_router = Router()
+command_router.message.middleware(VerifyPrivateChatMiddleware())
 command_router.message.filter(F.text.startswith("/"))
 command_router.message.middleware(VerifyContactMiddleware())
 command_router.message.register(multi_authentication.logout, Command('logout'))
