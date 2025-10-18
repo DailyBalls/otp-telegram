@@ -3,10 +3,11 @@ from typing import List
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.types.inline_keyboard_button import InlineKeyboardButton
+from aiogram.types.web_app_info import WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from config import BotConfig
-from models.model_games import AvailableGames, Game
+from models.model_games import Game
 from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 from bot_instance import LoggedInStates, bot
@@ -23,7 +24,7 @@ async def callback_game_list(callback: types.CallbackQuery, config: BotConfig, s
         return
     
     games_list: List[Game] = []
-    for game in games.data['games']:
+    for game in games.data.get('games', []):
         games_list.append(Game(**game))
 
     lastPage = games.data['pagination']['lastPage']
@@ -56,6 +57,16 @@ async def callback_game_list(callback: types.CallbackQuery, config: BotConfig, s
         await callback.message.answer(text=reply_message, reply_markup=builder.as_markup())
     return
 
+async def callback_game_list_provider(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, api_client: OTPAPIClient, user_model: ModelUser) -> None:
+    callback_data = callback.data.replace("games_list_provider_", "").split("_")
+    provider_id = callback_data[0]
+    page = int(callback_data[1]) if len(callback_data) > 1 else 1
+    games = await api_client.list_games_provider(provider_id, page)
+    if games.is_error:
+        await callback.answer("Gagal memuat daftar game")
+        return
+    return
+
 async def callback_game_generate_launch(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, api_client: OTPAPIClient, user_model: ModelUser) -> None:
     game_launch_string = callback.data.replace("game_launch_", "")
     game_launch_string = base64.b64decode(game_launch_string).decode()
@@ -67,12 +78,19 @@ async def callback_game_generate_launch(callback: types.CallbackQuery, config: B
     # print(api_response.data)
     game_name = api_response.data['game_name']
     game_url = api_response.data['game_url']
+    image_url = api_response.data['image_url']
     await callback.answer(game_name)
 
+
     builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text=f"{game_name} 🔗", url=game_url))
-    builder.adjust(1)
-    user_model.add_message_id((await callback.message.answer("Silahkan click tombol di bawah untuk membuka game", reply_markup=builder.as_markup())).message_id)
+    web_app = WebAppInfo(url=game_url)
+    builder.add(InlineKeyboardButton(text=f"Buka Game 🔗", web_app=web_app))
+    builder.add(InlineKeyboardButton(text="Tutup", callback_data=f"action_close_with_answer_"))
+    builder.adjust(2)
+    if image_url is not None:
+        user_model.add_message_id((await callback.message.answer_photo(caption=game_name, photo=image_url, reply_markup=builder.as_markup())).message_id)
+    else:
+        user_model.add_message_id((await callback.message.answer(f"{game_name}\n\nSilahkan click tombol di bawah untuk membuka game", reply_markup=builder.as_markup())).message_id)
     await user_model.save_to_state()
     return
 
