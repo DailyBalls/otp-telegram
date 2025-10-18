@@ -35,6 +35,11 @@ class LoggedInStates(StatesGroup):
     
     game_search = State()
 
+    rekening_add_1_ask_bank_name = State()
+    rekening_add_2_ask_bank_account_name = State()
+    rekening_add_3_ask_bank_account_number = State()
+    rekening_add_4_ask_confirm_add = State()
+
 
 
 bot = Bot(

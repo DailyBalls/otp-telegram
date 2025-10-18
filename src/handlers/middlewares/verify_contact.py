@@ -37,12 +37,12 @@ class VerifyContactMiddleware(BaseModelMiddleware):
             
         if contact is None:
             markup = ReplyKeyboardBuilder()
-            b5 = KeyboardButton(text="Share a number", request_contact=True)
+            b5 = KeyboardButton(text="Verifikasi Akun", request_contact=True)
             markup.add(b5)
             await event.answer(
-                "🔐 <b>Contact Verification Required</b>\n\n"
-                "To continue using this bot, please share your contact information.\n"
-                "Tap the contact button below to verify your identity.",
+                "🔐 <b>Verifikasi Diperlukan</b>\n\n"
+                "Untuk menghindari penggunaan yang tidak sah, Silahkan veirifikasi akun anda\n"
+                "Tekan tombol kontak di bawah ini untuk memverifikasi akun anda.",
                 reply_markup=markup.as_markup(resize_keyboard=True, one_time_keyboard=True)  # You can add a contact request button here if needed
             )
             return  # Block the handler from executing

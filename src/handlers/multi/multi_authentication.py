@@ -39,7 +39,8 @@ async def login_init(callback: CallbackQuery | Message, config: BotConfig, state
     message_id: int | None = None
     if isinstance(callback, CallbackQuery):
         if user_model is not None:
-            callback.answer("Silahkan logout terlebih dahulu")
+            await callback.message.delete()
+            await callback.answer("Silahkan logout terlebih dahulu")
             return
         chat_id = callback.message.chat.id
         message_id = callback.message.message_id
@@ -100,10 +101,18 @@ async def logout(callback: CallbackQuery | Message, config: BotConfig, state: FS
         await user_model.logout()
         await user_model.delete_from_state()
     
+    await state.set_state(None)
+    message_id: int | None = None
+    chat_id: int | None = None
     if isinstance(callback, CallbackQuery):
         await callback.answer("Logout berhasil")
+        message_id = callback.message.message_id
+        chat_id = callback.message.chat.id
+    elif isinstance(callback, Message):
+        message_id = callback.message_id
+        chat_id = callback.chat.id
 
-    await bot.send_message(callback.message.chat.id, "Logout berhasil", reply_markup=get_guest_menu_builder().as_markup(resize_keyboard=True))
+    await bot.send_message(chat_id, "Logout berhasil", reply_markup=get_guest_menu_builder().as_markup(resize_keyboard=True))
 
     return await callback_auth_clear(config, state)
 
@@ -175,6 +184,14 @@ Entrypoint:
 '''
 async def register_init(callback: CallbackQuery | Message, config: BotConfig, state: FSMContext, telegram_data: ModelTelegramData) -> None:
     await callback_auth_clear(config, state)
+    user_model: ModelUser | None = await model_utils.load_model(ModelUser, state)
+    if user_model is not None:
+        if isinstance(callback, CallbackQuery):
+            await callback.answer("Silahkan logout terlebih dahulu")
+            return
+        elif isinstance(callback, Message):
+            await callback.reply("Silahkan logout terlebih dahulu")
+            return
 
     api_client = OTPAPIClient(state=state, user_id=callback.from_user.id, base_url=config.otp_host)
     ask_auth = await api_client.ask_auth()

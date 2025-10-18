@@ -3,6 +3,7 @@ from aiogram import F
 
 from bot_instance import GuestStates, LoggedInStates
 from handlers.messages.msg_contact import msg_contact
+from handlers.messages.msg_rekening import msg_rekening_ask_bank_account_name, msg_rekening_ask_bank_account_number
 from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddleware
 from handlers.middlewares.verify_contact import VerifyContactMiddleware
 from handlers.middlewares.register_middleware import RegisterSessionMiddleware
@@ -53,4 +54,6 @@ authenticated_only_router.message.middleware(AuthenticatedSessionMiddleware())
 authenticated_only_router.message.register(msg_deposit_ask_amount, LoggedInStates.deposit_ask_amount)
 authenticated_only_router.message.register(msg_game_search, LoggedInStates.game_search)
 authenticated_only_router.message.register(msg_withdraw_ask_amount, LoggedInStates.withdraw_ask_amount)
+authenticated_only_router.message.register(msg_rekening_ask_bank_account_name, LoggedInStates.rekening_add_2_ask_bank_account_name)
+authenticated_only_router.message.register(msg_rekening_ask_bank_account_number, LoggedInStates.rekening_add_3_ask_bank_account_number)
 message_router.include_router(authenticated_only_router)

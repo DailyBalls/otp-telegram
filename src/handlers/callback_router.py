@@ -8,7 +8,7 @@ from handlers.callbacks.callback_action import callback_action_cancel, callback_
 from handlers.callbacks.callback_deposit import callback_deposit_ask_payment_method, callback_deposit_confirm_channel, callback_deposit_init, callback_deposit_ask_channel, callback_deposit_confirm_yes
 from handlers.callbacks.callback_game import callback_game_generate_launch, callback_game_list, callback_game_search_init, callback_game_search_navigation
 from handlers.callbacks.callback_register import callback_register_bank, callback_register_edit, callback_auth_clear, callback_register_confirm_yes
-from handlers.callbacks.callback_rekening import callback_rekening_add, callback_rekening_list
+from handlers.callbacks.callback_rekening import callback_rekening_add, callback_rekening_list, callback_rekening_add_bank, callback_rekening_add_cancel, callback_rekening_add_confirm
 from handlers.middlewares.register_middleware import RegisterSessionMiddleware
 from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddleware
 from handlers.middlewares.verify_private_chat import VerifyPrivateChatMiddleware
@@ -54,6 +54,9 @@ logged_in_router.callback_query.register(callback_game_search_navigation, TextPr
 # Rekening callbacks
 logged_in_router.callback_query.register(callback_rekening_list, Text(data="rekening_list"))
 logged_in_router.callback_query.register(callback_rekening_add, Text(data="rekening_add"))
+logged_in_router.callback_query.register(callback_rekening_add_bank, TextPrefix(prefix="rekening_add_bank_"))
+logged_in_router.callback_query.register(callback_rekening_add_cancel, Text(data="rekening_add_cancel"))
+logged_in_router.callback_query.register(callback_rekening_add_confirm, Text(data="rekening_add_confirm"))
 # Action callbacks
 callback_router.callback_query.register(callback_action_reply_callback, TextPrefix(prefix="action_reply_callback_"))
 callback_router.callback_query.register(callback_action_close_with_answer, TextPrefix(prefix="action_close_with_answer_"))

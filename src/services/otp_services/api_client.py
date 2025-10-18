@@ -173,6 +173,21 @@ class OTPAPIClient:
     async def list_rekening(self) -> APIResponse:
         """GET request to /api/v1/telegram/me/rekening"""
         return await self._make_request("GET", "/api/v1/telegram/me/rekening")
+    
+    @authenticated
+    async def initiate_rekening_add(self) -> APIResponse:
+        """POST request to /api/v1/telegram/rekening/add"""
+        return await self._make_request("GET", "/api/v1/telegram/me/rekening/add")
+
+    @authenticated
+    async def submit_rekening_add(self, bank_name: str, bank_account_name: str, bank_account_number: str) -> APIResponse:
+        """POST request to /api/v1/telegram/rekening/add"""
+        data = {
+            "bank_name": bank_name,
+            "name": bank_account_name,
+            "rekening_bank": bank_account_number
+        }
+        return await self._make_request("POST", "/api/v1/telegram/me/rekening/add", data)
 
     @authenticated
     async def search_games(self, search_query: str, page: int = 1) -> APIResponse:
@@ -181,3 +196,5 @@ class OTPAPIClient:
             "search": search_query
         }
         return await self._make_request("POST", f"/api/v1/telegram/game/search?page={page}", data)
+    
+    

@@ -11,11 +11,14 @@ from .base_state_model import BaseStateModel
 
 
 class RekeningAdd(BaseModel):
+    initiator_message_id: Optional[int] = None
     list_active_banks: Optional[list[str]] = None
+    list_user_banks: Optional[list[str]] = None
     bank_name: Optional[str] = None
     bank_account_name: Optional[str] = None
     bank_account_number: Optional[str] = None
-
+    list_messages_ids: Optional[list[int]] = None
+    chat_id: Optional[int] = None
 
 class ModelUser(BaseStateModel):
     username: Optional[str] = None
@@ -77,3 +80,12 @@ class ModelUser(BaseStateModel):
         if self.deposit_channels is None:
             return []
         return [channel for channel in self.deposit_channels if channel.type == type]
+
+    def add_rekening_message_id(self, message_id: int) -> None:
+        if self.temp_rekening_add is None: 
+            raise Exception("Temp RekeningAdd model not initiated")
+
+        self.temp_rekening_add.list_messages_ids.append(message_id)
+        self.add_message_id(message_id)
+        self._auto_save_if_enabled()
+        return
