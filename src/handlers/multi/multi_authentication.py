@@ -8,8 +8,7 @@ from aiogram.types.reply_keyboard_remove import ReplyKeyboardRemove
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 from config import BotConfig
 from handlers.callbacks.callback_auth import callback_auth_clear
-from handlers.commands.cmd_action import cmd_start_authenticated
-from keyboards.inline import keyboard_guest
+from handlers.multi import multi_menu
 from models.model_login import ModelLogin
 from models.model_register import ModelRegister
 from models.model_telegram_data import ModelTelegramData
@@ -54,7 +53,7 @@ async def login_init(callback: CallbackQuery | Message, config: BotConfig, state
         message_id = callback.message_id
     
     await callback_auth_clear(config, state)
-    login_model = ModelLogin(state=state, chat_id=chat_id)
+    login_model = ModelLogin(state=state, chat_id=chat_id, initiator_message_id=message_id)
     if isinstance(callback, Message):
         login_model.add_message_id(message_id)
     await login_model.save_to_state()
@@ -68,24 +67,22 @@ async def login_init(callback: CallbackQuery | Message, config: BotConfig, state
         if response.success:
             # Success case - check if captcha is required
             captcha_required = response.data.get('captcha', False) if response.data else False
-            
-            if captcha_required:
-                pass # TODO: Handle captcha
-            else:
-                builder = InlineKeyboardBuilder()
-                builder.add(InlineKeyboardButton(text="Batalkan", callback_data="login_cancel"))
-                login_model.add_message_id((await bot.send_message(chat_id, """
-Silahkan kirimkan username dan password dengan format: username:password
-Contoh: fulan:rahasia
+            login_model.is_required_captcha = captcha_required
+            builder = InlineKeyboardBuilder()
+            builder.add(InlineKeyboardButton(text="Batalkan", callback_data="login_cancel"))
+            login_model.add_message_id((await bot.send_message(chat_id, """
+Silahkan kirimkan username
 """, reply_markup=builder.as_markup())).message_id)
 
-                await state.set_state(GuestStates.login_1_ask_credentials)
+            await state.set_state(GuestStates.login_1_ask_username)
         else:
             login_model.add_message_id((await bot.send_message(chat_id, "Gagal memulai proses login")).message_id)
             login_model.add_message_id((await bot.send_message(chat_id, f"Error: {response.get_error_message()}")).message_id)
-
+        
     except Exception as e:
         login_model.add_message_id((await bot.send_message(chat_id, "Terjadi kesalahan sistem")).message_id)
+    finally:
+        await login_model.save_to_state()
 
 '''
 Logout Function
@@ -114,7 +111,12 @@ async def logout(callback: CallbackQuery | Message, config: BotConfig, state: FS
 
     await bot.send_message(chat_id, "Logout berhasil", reply_markup=get_guest_menu_builder().as_markup(resize_keyboard=True))
 
-    return await callback_auth_clear(config, state)
+    await callback_auth_clear(config, state)
+    
+    if isinstance(callback, CallbackQuery):
+        return await multi_menu.guest_menu(callback.message, config, state)
+    else:
+        return await multi_menu.guest_menu(callback, config, state)
 
 '''
 Login Cancel Function
@@ -127,35 +129,81 @@ async def login_cancel(callback: CallbackQuery, config: BotConfig, state: FSMCon
     return await callback_auth_clear(config, state)
 
 '''
-Login Submit Credentials Function
+Login Submit Username Function
 
 Entrypoint:
-- Message Router (text: username:password)
+- Message Router (text: username)
 '''
-async def login_submit_credentials(callback: Message, config: BotConfig, state: FSMContext):
-    await callback.delete()
+async def login_submit_username(callback: Message, config: BotConfig, state: FSMContext):
     login_model: ModelLogin | None = await model_utils.load_model(ModelLogin, state)
     if login_model is None:
         return
-    
-    if callback.text.count(":") != 1:
-        login_model.add_message_id((await callback.answer("Format tidak valid, silahkan kirimkan username dan password dengan format: \n<code>username:password</code>")).message_id)
+    login_model.add_message_id(callback.message_id)
+    login_model.username = callback.text
+
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="Batalkan", callback_data="login_cancel"))
+    login_model.add_message_id((await callback.answer("Silahkan kirimkan password", reply_markup=builder.as_markup())).message_id)
+    await state.set_state(GuestStates.login_2_ask_password)
+
+'''
+Login Submit Password Function
+
+Entrypoint:
+- Message Router (text: password)
+'''
+async def login_submit_password(callback: Message, config: BotConfig, state: FSMContext):
+    login_model: ModelLogin | None = await model_utils.load_model(ModelLogin, state)
+    if login_model is None:
+        await callback.reply("Silahkan ulangi proses login")
         return
 
-    username, password = callback.text.split(":")
+    login_model.add_message_id(callback.message_id)
+    login_model.password = callback.text
+
+    if login_model.is_required_captcha:
+        builder = InlineKeyboardBuilder()
+        builder.add(InlineKeyboardButton(text="Batalkan", callback_data="login_cancel"))
+        
+        login_model.add_message_id((await callback.answer("Silahkan kirimkan captcha", reply_markup=builder.as_markup())).message_id)
+        await state.set_state(GuestStates.login_3_ask_captcha)
+        await login_model.save_to_state()
+    else:
+        return await login_submit(callback, config, state, login_model)
+
+async def login_submit_captcha(callback: Message, config: BotConfig, state: FSMContext, login_model: ModelLogin):
+    login_model: ModelLogin | None = await model_utils.load_model(ModelLogin, state)
+    if login_model is None:
+        await callback.reply("Silahkan ulangi proses login")
+        return
+
+    login_model.add_message_id(callback.message_id)
+    login_model.captcha = callback.text
+    await login_model.save_to_state()
+    return await login_submit(callback, config, state, login_model)
+
+'''
+Login Submit Function
+
+Entrypoint:
+- self.login_submit_password()
+- self.login_submit_captcha()
+'''
+async def login_submit(callback: Message, config: BotConfig, state: FSMContext, login_model: ModelLogin):
+    await login_model.delete_all_messages()
     api_client = OTPAPIClient(state=state, user_id=callback.from_user.id, base_url=config.otp_host)
-    response = await api_client.submit_login({"username": username, "password": password})
-    
-    username, password = callback.text.split(":")
-    api_client = OTPAPIClient(state=state, user_id=callback.from_user.id, base_url=config.otp_host)
-    response = await api_client.submit_login({"username": username, "password": password})
-    
+    response = await api_client.submit_login(login_model.dump_data())
+
     if response.is_error:
         login_model.add_message_id((await callback.answer(f"{response.get_error_message()}")).message_id)
+        login_model.add_message_id((await callback.answer(f"Silahkan ulangi proses login dengan mengetik /login")).message_id)
+        
         if response.has_validation_errors:
             for field, errors in response.metadata.get('validation', {}).items():
                 for error in errors:
                     login_model.add_message_id((await callback.answer(f"Validasi Error: {error}")).message_id)
+        await login_model.save_to_state()
+        await state.set_state(None)
         return
 
     user_model = ModelUser(
@@ -166,13 +214,20 @@ async def login_submit_credentials(callback: Message, config: BotConfig, state: 
     )
     await user_model.save_to_state()
     await state.set_state(LoggedInStates.main_menu)
-    reply_keyboard = ReplyKeyboardRemove()
-    user_model.add_message_id((await callback.answer("Login berhasil", reply_markup=reply_keyboard)).message_id)
+    reply_keyboard = ReplyKeyboardBuilder()
+    reply_keyboard.add(KeyboardButton(text="Menu"))
+    reply_keyboard.add(KeyboardButton(text="Deposit"))
+    reply_keyboard.add(KeyboardButton(text="Withdraw"))
+    reply_keyboard.add(KeyboardButton(text="Logout"))
+
+    reply_keyboard.adjust(2)
+    user_model.add_message_id((await callback.answer("Login berhasil", reply_markup=reply_keyboard.as_markup(resize_keyboard=True))).message_id)
 
     await callback_auth_clear(config, state)
 
     # Redirect to authenticated /start command
-    await cmd_start_authenticated(callback, config, state, user_model)
+    await multi_menu.logged_in_menu(callback, config, state, user_model)
+    return response.data
 
 '''
 Register Init Function

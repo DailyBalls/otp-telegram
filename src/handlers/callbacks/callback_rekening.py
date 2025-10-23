@@ -25,7 +25,8 @@ async def callback_rekening_list(callback: CallbackQuery, config: BotConfig, sta
     
     builder = InlineKeyboardBuilder()
     builder.add(InlineKeyboardButton(text="Tambahkan Rekening", callback_data=f"rekening_add"))
-    builder.adjust(1)
+    builder.add(InlineKeyboardButton(text="Tutup", callback_data="action_close_with_answer_"))
+    builder.adjust(2)
     
     reply_message = f"""
 Menampilkan daftar rekening yang anda miliki
@@ -110,8 +111,8 @@ async def callback_rekening_add_cancel(callback: CallbackQuery, config: BotConfi
     return
 
 async def callback_rekening_add_confirm(callback: CallbackQuery, config: BotConfig, state: FSMContext, api_client: OTPAPIClient, user_model: ModelUser) -> None:
-    api_submit_rekening_add: APIResponse = await api_client.submit_rekening_add(user_model.temp_rekening_add.bank_name, user_model.temp_rekening_add.bank_account_name, user_model.temp_rekening_add.bank_account_number)
-    if api_submit_rekening_add.is_error:
+    api_insert_rekening: APIResponse = await api_client.insert_rekening(user_model.temp_rekening_add.bank_name, user_model.temp_rekening_add.bank_account_name, user_model.temp_rekening_add.bank_account_number)
+    if api_insert_rekening.is_error:
         await callback.answer(f"Gagal menambahkan rekening")
         return
     

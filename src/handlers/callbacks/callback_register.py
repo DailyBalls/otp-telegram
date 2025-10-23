@@ -5,8 +5,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from bot_instance import GuestStates, bot, LoggedInStates
 from config import BotConfig
 from handlers.callbacks.callback_auth import callback_auth_clear
-from handlers.commands.cmd_action import cmd_start_authenticated
 from handlers.messages.msg_register import send_confirmation_register_message
+from handlers.multi import multi_menu
 from keyboards.inline import keyboard_guest
 from models.model_register import ModelRegister
 from models.model_telegram_data import ModelTelegramData
@@ -100,7 +100,7 @@ async def callback_register_confirm_yes(callback: types.CallbackQuery, config: B
 
     # Redirect to authenticated /start command
     await state.set_state(LoggedInStates.main_menu)
-    await cmd_start_authenticated(callback.message, config, state, user_model)
+    await multi_menu.logged_in_menu(callback.message, config, state, user_model)
     return
 
 async def callback_register_confirm_no(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, register_model: ModelRegister) -> None:

@@ -10,24 +10,31 @@ from handlers.middlewares.register_middleware import RegisterSessionMiddleware
 from handlers.messages.msg_register import msg_register_1_username, msg_register_2_password, msg_register_3_bank_name, msg_register_4_bank_account_name, msg_register_5_bank_account_number
 from handlers.messages.msg_deposit import msg_deposit_ask_amount
 from handlers.messages.msg_game import msg_game_search
-from handlers.messages.msg_withdraw import msg_withdraw_ask_amount
 
-from handlers.multi import multi_authentication
+from handlers.multi import multi_authentication, multi_menu, multi_withdraw
 from utils.filters import StatesGroup, Text
 from handlers.middlewares.verify_private_chat import VerifyPrivateChatMiddleware
 
 message_router = Router()
+# Validate if chat came only from Private Chat
 message_router.message.middleware(VerifyPrivateChatMiddleware())
-message_router.message.filter(~F.text.startswith("/"))
-message_router.message.register(msg_contact, F.contact)
-message_router.message.register(multi_authentication.login_init, Text(data="login"))
-message_router.message.register(multi_authentication.logout, Text(data="logout"))
-message_router.message.register(multi_authentication.register_init, Text(data="register"))
 # Add contact verification middleware to all message handlers
 message_router.message.middleware(VerifyContactMiddleware())
+message_router.message.filter(~F.text.startswith("/"))
+message_router.message.register(msg_contact, F.contact)
+message_router.message.register(multi_authentication.logout, Text(data="logout"))
+
+guest_router = Router()
+guest_router.message.filter(~StatesGroup(LoggedInStates)) # ~ = Not in LoggedInStates
+guest_router.message.register(multi_authentication.login_init, Text(data="login"))
+guest_router.message.register(multi_authentication.register_init, Text(data="register"))
+guest_router.message.register(multi_menu.guest_menu, Text(data="menu"))
+message_router.include_router(guest_router)
 
 login_router = Router()
-login_router.message.register(multi_authentication.login_submit_credentials, GuestStates.login_1_ask_credentials)
+login_router.message.register(multi_authentication.login_submit_username, GuestStates.login_1_ask_username)
+login_router.message.register(multi_authentication.login_submit_password, GuestStates.login_2_ask_password)
+login_router.message.register(multi_authentication.login_submit_captcha, GuestStates.login_3_ask_captcha)
 message_router.include_router(login_router)
 
 # Contact message handler
@@ -50,10 +57,14 @@ message_router.include_router(register_router)
 # message_router.message.register(msg_register_6_confirm_register, GuestStates.register_6_ask_confirm_register)
 
 authenticated_only_router = Router()
+authenticated_only_router.message.filter(StatesGroup(LoggedInStates))
 authenticated_only_router.message.middleware(AuthenticatedSessionMiddleware())
+authenticated_only_router.message.register(multi_authentication.logout, Text(data="logout"))
+authenticated_only_router.message.register(multi_menu.logged_in_menu, Text(data="menu"))
 authenticated_only_router.message.register(msg_deposit_ask_amount, LoggedInStates.deposit_ask_amount)
 authenticated_only_router.message.register(msg_game_search, LoggedInStates.game_search)
-authenticated_only_router.message.register(msg_withdraw_ask_amount, LoggedInStates.withdraw_ask_amount)
 authenticated_only_router.message.register(msg_rekening_ask_bank_account_name, LoggedInStates.rekening_add_2_ask_bank_account_name)
 authenticated_only_router.message.register(msg_rekening_ask_bank_account_number, LoggedInStates.rekening_add_3_ask_bank_account_number)
+authenticated_only_router.message.register(multi_withdraw.withdraw_init, Text(data="withdraw"))
+authenticated_only_router.message.register(multi_withdraw.withdraw_input_amount, LoggedInStates.withdraw_ask_amount)
 message_router.include_router(authenticated_only_router)

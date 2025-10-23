@@ -1,4 +1,5 @@
 import base64
+from contextlib import suppress
 from typing import List
 from aiogram import types
 from aiogram.fsm.context import FSMContext
@@ -7,16 +8,25 @@ from aiogram.types.web_app_info import WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from config import BotConfig
-from models.model_games import Game
+from models.model_games import Game, Provider
 from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 from bot_instance import LoggedInStates, bot
 
-async def callback_game_list(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, api_client: OTPAPIClient) -> None:
+async def callback_provider_list(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, api_client: OTPAPIClient) -> None:
+    providers = await api_client.list_providers()
+    if providers.is_error:
+        await callback.answer("Gagal memuat daftar provider")
+        return
+    return
+
+async def callback_game_list(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, api_client: OTPAPIClient, user_model: ModelUser) -> None:
     callback_data = callback.data.replace("games_list_", "").split("_")
-    game_type = callback_data[0]
+    game_part = callback_data[0].split("|")
+    game_type = game_part[0]
+    provider_id = game_part[1] if len(game_part) > 1 else "all"
     page = int(callback_data[1]) if len(callback_data) > 1 else 1
-    games = await api_client.list_games(game_type, page)
+    games = await api_client.list_games_by_type_and_provider(game_type, provider_id, page)
     is_edit_message = len(callback_data) == 2
 
     if games.is_error:
@@ -25,7 +35,7 @@ async def callback_game_list(callback: types.CallbackQuery, config: BotConfig, s
     
     games_list: List[Game] = []
     for game in games.data.get('games', []):
-        games_list.append(Game(**game))
+        if game is not None: games_list.append(Game(**game))
 
     lastPage = games.data['pagination']['lastPage']
    
@@ -50,22 +60,39 @@ async def callback_game_list(callback: types.CallbackQuery, config: BotConfig, s
     navigation_builder.adjust(3)
     builder.attach(navigation_builder)
 
+    provider_builder = InlineKeyboardBuilder()
+    provider_builder.add(InlineKeyboardButton(text="Filter Berdasarkan Provider", callback_data=f"games_list_all"))
+    provider_builder.adjust(1)
+
+    builder.attach(provider_builder)
+
+
     reply_message = f"Menampilkan Game <b>{game_type.capitalize()}</b> halaman <b>{page}/{lastPage}</b>:"
     if is_edit_message:
-        await bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id, text=reply_message, reply_markup=builder.as_markup())
+        with suppress(Exception):
+            await callback.message.edit_text(text=reply_message, reply_markup=builder.as_markup())
     else:
-        await callback.message.answer(text=reply_message, reply_markup=builder.as_markup())
+        user_model.add_message_id((await callback.message.answer(text=reply_message, reply_markup=builder.as_markup())).message_id)
+
+    await callback.answer(f"Menampilkan Halaman {page}/{lastPage}")
     return
 
-async def callback_game_list_provider(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, api_client: OTPAPIClient, user_model: ModelUser) -> None:
-    callback_data = callback.data.replace("games_list_provider_", "").split("_")
-    provider_id = callback_data[0]
-    page = int(callback_data[1]) if len(callback_data) > 1 else 1
-    games = await api_client.list_games_provider(provider_id, page)
-    if games.is_error:
-        await callback.answer("Gagal memuat daftar game")
+async def callback_list_provider(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, api_client: OTPAPIClient, user_model: ModelUser) -> None:
+    callback_data = callback.data.replace("provider_list_", "").split("_")
+    game_type = callback_data[0]
+    providers = await api_client.list_providers(game_type)
+    if providers.is_error:
+        await callback.answer("Gagal memuat daftar provider")
         return
-    return
+    
+    providers_list: List[Provider] = []
+    for provider in providers.data.get('providers', []):
+        providers_list.append(Provider(**provider))
+    builder = InlineKeyboardBuilder()
+    for provider in providers_list:
+        builder.add(InlineKeyboardButton(text=provider.provider_name_mobile, callback_data=f"game_list_{game_type}|{provider.provider_id}"))
+    builder.adjust(2)
+    await callback.message.edit_text(text="Silahkan pilih provider", reply_markup=builder.as_markup())
 
 async def callback_game_generate_launch(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, api_client: OTPAPIClient, user_model: ModelUser) -> None:
     game_launch_string = callback.data.replace("game_launch_", "")

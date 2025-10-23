@@ -1,5 +1,6 @@
 import asyncio
-from typing import Optional
+from datetime import datetime
+from typing import Optional, Required
 from aiogram.fsm.context import FSMContext
 from pydantic import BaseModel
 from aiogram import types
@@ -20,6 +21,69 @@ class RekeningAdd(BaseModel):
     list_messages_ids: Optional[list[int]] = None
     chat_id: Optional[int] = None
 
+class UserAction(BaseModel):
+    current_action: Optional[str] = None
+    action_data: Optional[dict] = {}
+    action_started_at: Optional[datetime] = datetime.now()
+    chat_id: Optional[int] = None
+    list_messages_ids: Optional[list[int]] = None
+    list_menu_ids: Optional[list[int]] = None
+
+    async def finish(self) -> None:
+        await self.delete_all_messages()
+        self.current_action = None
+        self.action_data = None
+        self.action_started_at = None
+        self.chat_id = None
+
+    async def initiate(self, action: str, **kwargs) -> None:
+        self.current_action = action
+        self.action_data = kwargs
+        self.action_started_at = datetime.now()
+        self.chat_id = kwargs.get("chat_id")
+        self._auto_save_if_enabled()
+        return
+
+    async def delete_all_messages(self) -> None:
+        if self.list_messages_ids is not None and self.chat_id is not None:
+            with suppress(Exception):
+                await bot.delete_messages(self.chat_id, self.list_messages_ids)
+        self.list_messages_ids = None
+        self.chat_id = None
+
+    def _add_menu_id(self, menu_id: int) -> None:
+        if self.list_messages_ids is None:
+            self.list_messages_ids = []
+        self.list_messages_ids.append(menu_id)
+        if self.list_menu_ids is None:
+            self.list_menu_ids = []
+        self.list_menu_ids.append(menu_id)
+
+    def unset_menu_id(self, menu_id: int) -> None:
+        if self.list_menu_ids is not None:
+            self.list_menu_ids.remove(menu_id)
+
+    def _add_message_id(self, message_id: int) -> None:
+        if self.list_messages_ids is None:
+            self.list_messages_ids = []
+        self.list_messages_ids.append(message_id)
+    
+    def unset_message_id(self, message_id: int) -> None:
+        if self.list_messages_ids is not None:
+            self.list_messages_ids.remove(message_id)
+
+    def set_action_data(self, key: str, value: any) -> None:
+        if self.action_data is None:
+            self.action_data = {}
+        self.action_data[key] = value
+    
+    def get_action_data(self, key: str) -> any:
+        if self.action_data is None:
+            return None
+        return self.action_data.get(key)
+
+
+
 class ModelUser(BaseStateModel):
     username: Optional[str] = None
     credit: Optional[str] = None
@@ -31,7 +95,9 @@ class ModelUser(BaseStateModel):
     chat_id: Optional[int] = None
     deposit_channels: Optional[list[DepositChannel]] = None
     temp_rekening_add: Optional[RekeningAdd] = None
-
+    action: Optional[UserAction] = None
+    pending_wd: Optional[bool] = False
+    
     def _get_state_key(self) -> str:
         """Override to use 'user' as the state key"""
         return "user"
@@ -89,3 +155,32 @@ class ModelUser(BaseStateModel):
         self.add_message_id(message_id)
         self._auto_save_if_enabled()
         return
+
+    def initiate_action(self, action: str, **kwargs) -> None:
+        self.action = UserAction(current_action=action, chat_id=self.chat_id, **kwargs)
+        self._auto_save_if_enabled()
+        return
+
+    async def _finish_action(self) -> None:
+        await self.action.delete_all_messages()
+        self.action = None
+        await self.save_to_state()
+
+    def finish_action(self) -> None:
+        asyncio.create_task(self._finish_action())
+        return
+
+    def add_action_message_id(self, message_id: int) -> None:
+        if self.action is None:
+            raise Exception("Action model not initiated")
+        self.action._add_message_id(message_id)
+        self.list_messages_ids.append(message_id)
+        self._auto_save_if_enabled()
+
+    def add_action_menu_id(self, menu_id: int) -> None:
+        if self.action is None:
+            raise Exception("Action model not initiated")
+        self.action._add_menu_id(menu_id)
+        self.action._add_message_id(menu_id)
+        self.list_messages_ids.append(menu_id)
+        self._auto_save_if_enabled()

@@ -33,7 +33,7 @@ class BaseStateModel(BaseModel):
     async def _save_to_state(self):
         """Save model data to FSM state"""
         if self._state:
-            print("Auto Saving model data to state", self._get_state_key())
+            # print("Auto Saving model data to state", self._get_state_key())
             # Get the model name for the state key (e.g., 'register', 'user')
             state_key = self._get_state_key()
             await self._state.update_data(**{state_key: self.model_dump_json()})

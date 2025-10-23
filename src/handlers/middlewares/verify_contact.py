@@ -1,6 +1,4 @@
 from typing import Any, Awaitable, Callable, Dict
-from aiogram import BaseMiddleware
-from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Contact, KeyboardButton, Message
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
@@ -15,17 +13,23 @@ class VerifyContactMiddleware(BaseModelMiddleware):
     async def __call__(
         self,
         handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
-        event: Message,
+        event: Message | CallbackQuery,
         data: Dict[str, Any],
     ) -> Any:
         self.fsm_context = data['state']
         self.data = data
         
+        if isinstance(event, CallbackQuery):
+            data['chat_id'] = event.message.chat.id
+            data['message_id'] = event.message.message_id
+        elif isinstance(event, Message):
+            data['chat_id'] = event.chat.id
+            data['message_id'] = event.message_id
+        
         telegram_data_model = await self.load_model(ModelTelegramData, 'telegram_data')
         
         if telegram_data_model is not None and telegram_data_model.contact_verified:
             # User has already verified contact, allow request to continue
-            print(data['config'])
             return await handler(event, data)
         
         contact: Contact | None = None
@@ -58,6 +62,7 @@ class VerifyContactMiddleware(BaseModelMiddleware):
         await telegram_data_model.save_to_state()
 
         data['telegram_data'] = telegram_data_model
+        
 
         event.delete()
         return await handler(event, data)

@@ -108,13 +108,16 @@ class OTPAPIClient:
                     await self._save_cookies_to_state(self.cookie_jar)
                     
                     response_data = await response.json()
+                    if response.status == 412:
+                        print(f"412 error {response_data.get('error', {}).get('message', 'Unknown error')}, retrying request to {self.base_url}{endpoint}")
+                        return await self._make_request(method, endpoint, data, custom_headers)
                     return APIResponse(response_data)
         except Exception as e:
             # Return error response for network issues
             error_response = {
                 "error": {
                     "code": 500,
-                    "message": f"Network error: {str(e)}"
+                    "message": f"Network error: {str(e)[0:3]}..."
                 },
                 "data": None,
                 "metadata": {}
@@ -126,48 +129,27 @@ class OTPAPIClient:
         """POST request to /api/v1/telegram/logout"""
         return await self._make_request("POST", "/api/v1/telegram/logout")
     
-    async def ask_auth(self) -> APIResponse:
-        """POST request to /api/v1/telegram/ask-auth"""
-        return await self._make_request("POST", "/api/v1/telegram/ask-auth")
-    
-    async def open_login_form(self) -> APIResponse:
-        """GET request to open login form (if needed)"""
-        return await self._make_request("GET", "/api/v1/telegram/login-form")
-
-    async def list_active_bank(self) -> APIResponse:
-        """GET request to /api/v1/telegram/bank"""
-        return await self._make_request("GET", "/api/v1/telegram/bank")
+    async def submit_login(self, data: Dict[str, Any]) -> APIResponse:
+        """POST request to /api/v1/telegram/login"""
+        return await self._make_request("POST", "/api/v1/telegram/login", data)
 
     async def submit_registration(self, data: Dict[str, Any]) -> APIResponse:
         """POST request to /api/v1/telegram/register"""
         return await self._make_request("POST", "/api/v1/telegram/register", data)
 
-    async def submit_login(self, data: Dict[str, Any]) -> APIResponse:
-        """POST request to /api/v1/telegram/login"""
-        return await self._make_request("POST", "/api/v1/telegram/login", data)
+    async def ask_auth(self) -> APIResponse:
+        """POST request to /api/v1/telegram/ask-auth"""
+        return await self._make_request("POST", "/api/v1/telegram/ask-auth")
+
+    async def list_active_bank(self) -> APIResponse:
+        """GET request to /api/v1/telegram/bank"""
+        return await self._make_request("GET", "/api/v1/telegram/bank")
+
 
     @authenticated
     async def me(self) -> APIResponse:
         """GET request to /api/v1/telegram/me - requires authentication"""
         return await self._make_request("POST", "/api/v1/telegram/me")
-
-    @authenticated
-    async def deposit_payment_channel(self) -> APIResponse:
-        """POST request to /api/v1/telegram/deposiy-payment-channel"""
-        return await self._make_request("POST", "/api/v1/telegram/bank/deposit-payment-channel")
-
-    async def list_games(self, game_type: str, page: int = 1) -> APIResponse:
-        """GET request to /api/v1/telegram/game"""
-        return await self._make_request("GET", f"/api/v1/telegram/game/{game_type}?page={page}")
-
-    @authenticated
-    async def get_game_url(self, game_code: str, provider_id: str) -> APIResponse:
-        """POST request to /api/v1/telegram/game/launch"""
-        data = {
-            "game_code": game_code,
-            "provider_id": provider_id
-        }
-        return await self._make_request("POST", f"/api/v1/telegram/game/launch", data)
 
     @authenticated
     async def list_rekening(self) -> APIResponse:
@@ -180,7 +162,7 @@ class OTPAPIClient:
         return await self._make_request("GET", "/api/v1/telegram/me/rekening/add")
 
     @authenticated
-    async def submit_rekening_add(self, bank_name: str, bank_account_name: str, bank_account_number: str) -> APIResponse:
+    async def insert_rekening(self, bank_name: str, bank_account_name: str, bank_account_number: str) -> APIResponse:
         """POST request to /api/v1/telegram/rekening/add"""
         data = {
             "bank_name": bank_name,
@@ -196,5 +178,56 @@ class OTPAPIClient:
             "search": search_query
         }
         return await self._make_request("POST", f"/api/v1/telegram/game/search?page={page}", data)
+        
+    @authenticated
+    async def get_game_url(self, game_code: str, provider_id: str) -> APIResponse:
+        """POST request to /api/v1/telegram/game/launch"""
+        data = {
+            "game_code": game_code,
+            "provider_id": provider_id
+        }
+        return await self._make_request("POST", f"/api/v1/telegram/game/launch", data)
+
+    @authenticated
+    async def list_deposit_payment_channel(self) -> APIResponse:
+        """POST request to /api/v1/telegram/deposiy-payment-channel"""
+        return await self._make_request("POST", "/api/v1/telegram/bank/deposit-payment-channel")
+
+    @authenticated
+    async def initiate_withdraw(self, amount: int) -> APIResponse:
+        """POST request to /api/v1/telegram/me/withdraw/initiate"""
+        data = {
+            "amount": amount
+        }
+        return await self._make_request("POST", "/api/v1/telegram/me/withdraw/initiate", data)
+
+    @authenticated
+    async def confirm_withdraw(self, amount: int, notes: str = "") -> APIResponse:
+        """POST request to /api/v1/telegram/me/withdraw/confirm"""
+        data = {
+            "jumlahwd": amount,
+            "catatanwd": notes
+        }
+        return await self._make_request("POST", "/api/v1/telegram/me/withdraw/confirm", data)
+
+    @authenticated
+    async def initiate_deposit(self) -> APIResponse:
+        """POST request to /api/v1/telegram/me/deposit/initiate"""
+        return await self._make_request("POST", "/api/v1/telegram/me/deposit/initiate")
+
+    async def list_games_by_type(self, game_type = "all", page: int = 1) -> APIResponse:
+        """GET request to /api/v1/telegram/game/{game_type}?page={page}"""
+        return await self._make_request("GET", f"/api/v1/telegram/game/{game_type}?page={page}")
+
+    async def list_games_by_type_and_provider(self, game_type: str, provider_id: str, page: int = 1) -> APIResponse:
+        """GET request to /api/v1/telegram/game/{game_type}/{provider_id}?page={page}"""
+        return await self._make_request("GET", f"/api/v1/telegram/game/{game_type}/{provider_id}?page={page}")
+
+    async def list_providers(self, game_type = "all") -> APIResponse:
+        """GET request to /api/v1/telegram/provider"""
+        return await self._make_request("GET", f"/api/v1/telegram/provider/{game_type}")
+
+
+    
     
     

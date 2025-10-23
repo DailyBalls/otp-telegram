@@ -48,3 +48,14 @@ class AvailableGames(BaseModel):
             return
         for game in data:
             self.games.append(Game(**game))
+
+
+class Provider(BaseModel):
+    provider_id: Optional[str] = None
+    provider_name: Optional[str] = None
+    provider_name_mobile: Optional[str] = None
+    provider_type: Optional[str] = None
+
+    @field_validator("provider_name", "provider_name_mobile", mode="before")
+    def validate_provider_name(cls, v):
+        return v.encode('ascii', errors='ignore').decode('ascii')

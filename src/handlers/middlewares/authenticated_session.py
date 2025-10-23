@@ -5,14 +5,16 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.types.keyboard_button import KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
+from handlers.callbacks.callback_auth import callback_auth_clear
 from handlers.middlewares.base_model_middleware import BaseModelMiddleware
+from handlers.multi import multi_menu
+from handlers.multi.multi_authentication import get_guest_menu_builder
 from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 from services.otp_services.exceptions import InvalidSessionError
 from services.otp_services.models import APIResponse
 import utils.fsm as fsm_utils
-from bot_instance import GuestStates
-from handlers.commands.cmd_action import cmd_start_unauthenticated
+from bot_instance import GuestStates, bot
 
 
 class AuthenticatedSessionMiddleware(BaseModelMiddleware):
@@ -66,14 +68,14 @@ class AuthenticatedSessionMiddleware(BaseModelMiddleware):
                 await user_model.logout()
                 await user_model.delete_all_messages()
                 await user_model.delete_from_state()
-            await fsm_utils.reset_fsm(self.fsm_context)
-            menu_builder = ReplyKeyboardBuilder()
-            menu_builder.add(KeyboardButton(text="Login"))
-            menu_builder.add(KeyboardButton(text="Register"))
-            menu_builder.adjust(2)  # One button per row
 
-            await event.answer("Sesi telah berakhir, silahkan login kembali", reply_markup=menu_builder.as_markup(resize_keyboard=True))
             await self.fsm_context.set_state(state=None)
-            await cmd_start_unauthenticated(event, data['config'], self.fsm_context)
+            await callback_auth_clear(data['config'], self.fsm_context)
+            if isinstance(event, CallbackQuery):
+                await bot.send_message(event.message.chat.id, "Sesi telah berakhir, silahkan login kembali", reply_markup=get_guest_menu_builder().as_markup(resize_keyboard=True))
+                await multi_menu.guest_menu(event.message, data['config'], self.fsm_context)
+            else:
+                await bot.send_message(event.chat.id, "Sesi telah berakhir, silahkan login kembali", reply_markup=get_guest_menu_builder().as_markup(resize_keyboard=True))
+                await multi_menu.guest_menu(event, data['config'], self.fsm_context)
             return
         

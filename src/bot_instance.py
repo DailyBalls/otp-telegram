@@ -20,7 +20,9 @@ class GuestStates(StatesGroup):
     register_5_edit_bank_account_number = State()
     register_6_ask_confirm_register     = State()
     
-    login_1_ask_credentials             = State()
+    login_1_ask_username                = State()
+    login_2_ask_password                = State()
+    login_3_ask_captcha                 = State()
 
 class LoggedInStates(StatesGroup):
     
@@ -32,6 +34,9 @@ class LoggedInStates(StatesGroup):
     deposit_confirm_channel = State()
     
     withdraw_ask_amount = State()
+    withdraw_ask_confirm = State()
+    withdraw_ask_notes = State()
+    
     
     game_search = State()
 
