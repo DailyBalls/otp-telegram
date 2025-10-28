@@ -39,10 +39,6 @@ class AuthenticatedSessionMiddleware(BaseModelMiddleware):
 
             response: APIResponse = await api_client.me()
             if response.is_authentication_error:
-                if user_model:
-                    await user_model.logout()
-                    await user_model.delete_all_messages()
-                    await user_model.delete_from_state()
                 raise InvalidSessionError()
             if(response.data is None):
                 print("response from OTP API is None")
