@@ -1,4 +1,6 @@
 from os import getenv
+from typing import Literal
+from aiogram.fsm.storage.base import DefaultKeyBuilder, StorageKey
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -19,15 +21,26 @@ from config import BotConfig
 import redis.asyncio as redis
 
 
-
 TOKEN = getenv("BOT_TOKEN")
 WHITELIST_MODE = str(getenv("WHITELIST_MODE")).lower() == "true"
+WEB_ID = getenv("WEB_ID")
 SERVER_NAME = getenv("SERVER_NAME")
 OTP_HOST = getenv("OTP_HOST")
 WHITELIST_IDS = [ 
     7957553101
 ]
 
+config: BotConfig = None
+
+class RedisKeyBuilder(DefaultKeyBuilder):
+    def build(self, key: StorageKey, part: Literal['data', 'state', 'lock'] | None = None) -> str:
+        parts = [getenv("WEB_ID")]
+
+        # Put user first (or rearrange as you wish)
+        parts.append(f"c{key.chat_id if key.chat_id is not None else '0'}")
+        parts.append(f"u{key.user_id if key.user_id is not None else '0'}")
+        parts.append(part)
+        return ":".join(parts)
 
 def register_routers(dp: Dispatcher) -> None:
     """Registers routers"""
@@ -41,9 +54,9 @@ async def main() -> None:
     redis_client = redis.Redis(host=getenv("REDIS_HOST"), port=getenv("REDIS_PORT"), password=getenv("REDIS_PASSWORD"), socket_connect_timeout=3)
     await redis_client.ping()
     print("Redis Engine Ready! Vroom. Vroom.")
-    redis_storage = RedisStorage(redis=redis_client)
+    redis_storage = RedisStorage(redis=redis_client, key_builder=RedisKeyBuilder())
     
-    config = BotConfig(server_name=SERVER_NAME, whitelist_mode=WHITELIST_MODE, whitelist_ids=WHITELIST_IDS, otp_host=OTP_HOST)
+    config = BotConfig(web_id=WEB_ID, server_name=SERVER_NAME, whitelist_mode=WHITELIST_MODE, whitelist_ids=WHITELIST_IDS, otp_host=OTP_HOST)
 
     dp = Dispatcher(storage=redis_storage)
     dp["config"] = config

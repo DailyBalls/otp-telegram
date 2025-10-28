@@ -134,6 +134,11 @@ class OTPAPIClient:
             print("ERROR: ", e)
             return APIResponse(error_response)
     
+
+    async def get_server_info(self) -> APIResponse:
+        """GET request to /api/v1/telegram/server/info"""
+        return await self._make_request("GET", "/api/v1/telegram/server/info")
+
     async def logout(self) -> APIResponse:
         """POST request to /api/v1/telegram/logout"""
         return await self._make_request("POST", "/api/v1/telegram/logout")
