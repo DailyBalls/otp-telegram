@@ -236,6 +236,19 @@ class OTPAPIClient:
         }
         return await self._make_request("POST", "/api/v1/telegram/me/deposit/confirm/bank", data)
 
+    @authenticated
+    async def confirm_deposit_payment_gateway(self, payment_gateway_id: int, amount: int, type: str):
+        """POST request to /api/v1/telegram/me/deposit/confirm/payment-gateway"""
+        if type.lower() == "qris":
+            type = "qr"
+        elif type.lower() == "va":
+            type = "va"
+        data = {
+            'gateway': payment_gateway_id,
+            'jumlahpgw': amount,
+            'type': type
+        }
+        return await self._make_request("POST", "/api/v1/telegram/me/deposit/confirm/payment-gateway", data)
     async def list_games_by_type(self, game_type = "all", page: int = 1) -> APIResponse:
         """GET request to /api/v1/telegram/game/{game_type}?page={page}"""
         return await self._make_request("GET", f"/api/v1/telegram/game/{game_type}?page={page}")

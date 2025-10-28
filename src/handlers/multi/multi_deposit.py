@@ -290,7 +290,6 @@ async def deposit_channel(event: CallbackQuery, config: BotConfig, state: FSMCon
         return
     
     if method == "BANK":
-        print("Channel ID: ", channel_id)
         bank = next((bank for bank in user_model.action.get_action_data(ACTION_DATA_DEPOSIT_BANKS) if bank["id"] == channel_id), None)
         if bank is None:
             await event.answer("Bank tidak valid")
@@ -778,7 +777,13 @@ async def deposit_confirm_submit(event: CallbackQuery, config: BotConfig, state:
     amount = user_model.action.get_action_data(ACTION_SUBMITTED_DEPOSIT_AMOUNT)
     notes = user_model.action.get_action_data(ACTION_SUBMITTED_NOTE)
     promo_id = user_model.action.get_action_data(ACTION_SUBMITTED_PROMO)
+    promo = None
 
+    message = f"""<b>Deposit berhasil dikonfirmasi</b>
+
+<b>Jumlah Deposit:</b> <code>Rp.{amount:,.0f}</code>
+<b>Metode Pembayaran:</b> <code>{deposit_method}</code>
+"""
     builder = InlineKeyboardBuilder()
     builder.add(InlineKeyboardButton(text="❌ Batalkan Deposit", callback_data="deposit_cancel"))
     builder.add(InlineKeyboardButton(text="✅ Coba Lagi", callback_data=f"deposit_confirm_submit_retry"))
@@ -786,47 +791,53 @@ async def deposit_confirm_submit(event: CallbackQuery, config: BotConfig, state:
     if deposit_method == "BANK":
         response = await api_client.confirm_deposit_bank(user_bank_id=user_bank_id, deposit_bank_id=channel_id, promo_id=promo_id, amount=amount, notes=notes)
         if response.is_error:
-            print(response.metadata)
             user_model.add_action_message_id((await event.message.answer(f"Gagal mengkonfirmasi deposit: {response.get_error_message()}", reply_markup=builder.as_markup())).message_id)
-            validation_error = response.metadata
+            if response.has_validation_errors:
+                for field, errors in response.metadata.get('validation', {}).items():
+                    for error in errors:
+                        user_model.add_action_message_id((await event.message.answer(f"Validasi Error: {error}")).message_id)
             return
-        if response.has_validation_errors:
-            for field, errors in response.metadata.get('validation', {}).items():
-                for error in errors:
-                    user_model.add_action_message_id((await event.message.answer(f"Validasi Error: {error}")).message_id)
-        
+            
         deposit_bank = next((bank for bank in user_model.action.get_action_data(ACTION_DATA_DEPOSIT_BANKS) if bank["id"] == int(channel_id)), None)
         user_bank = next((bank for bank in user_model.action.get_action_data(ACTION_DATA_USER_BANKS) if bank["id"] == int(user_bank_id)), None)
-        promo = None
+        message += f"<b>Rekening Tujuan:</b> <code>{deposit_bank['bank_account_display']}</code>\n"
+        message += f"<b>Rekening Sumber:</b> <code>{user_bank['bank_name']} {user_bank['bank_account_number']} - {user_bank['bank_account_name']}</code>\n"
+        
         if promo_id is not None and promo_id != 0:
             promo = next((promo for promo in user_model.action.get_action_data(ACTION_DATA_PROMO) if promo["id"] == promo_id), None)
-        
-        message = f"""<b>Deposit berhasil dikonfirmasi</b>
+            if promo is not None:
+                message += f"<b>Promo:</b> <code>{promo['name']}</code>\n"
+                message += f"- <b>Turnover:</b> <code>{promo['turnover']}x</code>\n"
+                message += f"- <b>Syarat WD:</b> <code>{promo['withdraw_requirement']}</code>\n"
+                message += f"- <b>Frequency:</b> <code>{promo['frequency']}</code>\n"
+                message += f"- <b>Amount:</b> <code>{promo['amount']}</code>\n"
 
-<b>Jumlah Deposit:</b> <b>Rp.{amount:,.0f}</b>
-<b>Metode Pembayaran:</b> <b>{deposit_method}</b>
-<b>Rekening Tujuan:</b> <b>{deposit_bank['bank_account_display']}</b>
-<b>Rekening Sumber:</b> <b>{user_bank['bank_name']} {user_bank['bank_account_number']} - {user_bank['bank_account_name']}</b>
-"""
-    if promo is not None:
-        message += f"<b>Promo:</b> <b>{promo['name']}</b>\n"
-        message += f"- <b>Turnover:</b> <b>{promo['turnover']}x</b>\n"
-        message += f"- <b>Syarat WD:</b> <b>{promo['withdraw_requirement']}</b>\n"
-        message += f"- <b>Frequency:</b> <b>{promo['frequency']}</b>\n"
-        message += f"- <b>Amount:</b> <b>{promo['amount']}</b>\n"
-    # elif deposit_method == "QRIS":
-    #     response = await api_client.confirm_deposit_qris(channel_id=channel_id, amount=amount, notes=notes)
-    #     if response.is_error:
-    #         await event.message.answer(f"Gagal mengkonfirmasi deposit: {response.get_error_message()}", reply_markup=builder.as_markup())
-    #         return
-    #     return await deposit_submit_success(event, config, state, user_model, chat_id)
-    # elif deposit_method == "VA":
-    #     response = await api_client.confirm_deposit_va(channel_id=channel_id, amount=amount, notes=notes)
-    #     if response.is_error:
-    #         await event.message.answer(f"Gagal mengkonfirmasi deposit: {response.get_error_message()}", reply_markup=builder.as_markup())
-    #         return
-    #     return await deposit_submit_success(event, config, state, user_model, chat_id)
+    elif deposit_method == "QRIS" or deposit_method == "VA":
+        payment_gateway = None
+        if deposit_method == "QRIS": payment_gateway = next((payment_gateway for payment_gateway in user_model.action.get_action_data(ACTION_DATA_QRIS_PAYMENT_GATEWAY) if payment_gateway["id"] == channel_id), None)
+        elif deposit_method == "VA": payment_gateway = next((payment_gateway for payment_gateway in user_model.action.get_action_data(ACTION_DATA_VA_PAYMENT_GATEWAY) if payment_gateway["id"] == channel_id), None)
+        
+        if payment_gateway is None:
+            await event.message.answer(f"Payment gateway tidak ditemukan", reply_markup=builder.as_markup())
+            return
+        message += f"<b>Payment Gateway:</b> <code>{payment_gateway['name']}</code>\n"
+        response = await api_client.confirm_deposit_payment_gateway(payment_gateway_id=payment_gateway['name'], amount=amount, type=deposit_method)
+        if response.is_error:
+            user_model.add_action_message_id((await event.message.answer(f"Gagal mengkonfirmasi deposit: {response.get_error_message()}", reply_markup=builder.as_markup())).message_id)
+            if response.has_validation_errors:
+                for field, errors in response.metadata.get('validation', {}).items():
+                    for error in errors:
+                        user_model.add_action_message_id((await event.message.answer(f"Validasi Error: {error}")).message_id)
+            return
+        
+        if deposit_method == "QRIS":
+            message += f"<b>Valid hingga:</b> <code>{response.data.get('expiredDate')} WIB</code>\n"
+            message += f"<b>Reference ID:</b> <code>{response.data.get('merchant_ref').split('_')[1]}</code>\n"
+            message += f"Silahkan melakukan pembayaran dengan scan QRIS berikut:"
+        elif deposit_method == "VA":
+            message += f"Silahkan melakukan transfer ke Virtual Account berikut: <code>{response.data.get('payment')}</code>"
     await event.message.answer(message)
+    if deposit_method == "QRIS": await event.message.answer_photo(photo=response.data.get('payment'))
     await user_model.await_finish_action()
     await user_model.save_to_state()
     await state.set_state(LoggedInStates.main_menu)
