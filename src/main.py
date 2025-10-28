@@ -24,7 +24,7 @@ import redis.asyncio as redis
 TOKEN = getenv("BOT_TOKEN")
 WHITELIST_MODE = str(getenv("WHITELIST_MODE")).lower() == "true"
 WEB_ID = getenv("WEB_ID")
-SERVER_NAME = getenv("SERVER_NAME")
+SITE_NAME = getenv("SITE_NAME")
 OTP_HOST = getenv("OTP_HOST")
 WHITELIST_IDS = [ 
     7957553101
@@ -56,7 +56,7 @@ async def main() -> None:
     print("Redis Engine Ready! Vroom. Vroom.")
     redis_storage = RedisStorage(redis=redis_client, key_builder=RedisKeyBuilder())
     
-    config = BotConfig(web_id=WEB_ID, server_name=SERVER_NAME, whitelist_mode=WHITELIST_MODE, whitelist_ids=WHITELIST_IDS, otp_host=OTP_HOST)
+    config = BotConfig(web_id=WEB_ID, site_name=SITE_NAME, whitelist_mode=WHITELIST_MODE, whitelist_ids=WHITELIST_IDS, otp_host=OTP_HOST)
 
     dp = Dispatcher(storage=redis_storage)
     dp["config"] = config

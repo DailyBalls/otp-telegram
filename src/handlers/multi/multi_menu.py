@@ -108,7 +108,7 @@ async def guest_menu(msg: Message, config: BotConfig, state: FSMContext) -> None
 
     menu_id = (await bot.send_message(msg.chat.id, f"""
 Halo <b>{msg.from_user.first_name}</b>!
-Selamat datang di <b>{config.server_name}</b>!
+Selamat datang di <b>{config.site_name}</b>!
 Silahkan melakukan login atau register terlebih dahulu
 """, reply_markup=builder.as_markup())).message_id
 
