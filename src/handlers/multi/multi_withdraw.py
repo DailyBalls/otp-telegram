@@ -19,6 +19,22 @@ ACTION_DATA_WITHDRAW_AMOUNT      = "withdraw_amount"
 ACTION_DATA_WITHDRAW_DESTINATION = "withdraw_destination"
 KEY_CACHED_WITHDRAW_AMOUNTS      = "cached_withdraw_amounts"
 
+KETENTUAN_WITHDRAW = """
+<b>Ketentuan Withdraw :</b>
+Mohon perhatikan Nama & Rekening adalah milik Anda.
+
+<b>Kami hanya melakukan transfer ke rekening yang terdaftar dalam Akun pemain Anda.</b>
+
+Catatan :
+- Harap melakukan konfirmasi Withdraw satu kali saja
+- Tunggu hingga permohonan anda diproses oleh staf kami
+- Saldo akan masuk segera masuk ke rekening Anda
+- Untuk penggantian rekening harap menghubungi CS kami
+
+Minimal Withdraw: <b>Rp.{MINIMAL_WITHDRAW:,.0f}</b>
+Maksimal Withdraw: <b>Rp.{MAXIMAL_WITHDRAW:,.0f}</b>
+Kelipatan Withdraw: <b>Rp.{WITHDRAW_MULTIPLES:,.0f}</b>
+"""
 
 def is_valid_withdraw_amount(amount: int, minimum_withdraw: int, maximum_withdraw: int, withdraw_multiples: int) -> bool:
     return amount <= maximum_withdraw and amount >= minimum_withdraw and amount % withdraw_multiples == 0
@@ -33,13 +49,18 @@ Entrypoint:
 '''
 async def withdraw_init(msg: Message | CallbackQuery, config: BotConfig, state: FSMContext, user_model: ModelUser, message_id: int, chat_id: int, api_client: OTPAPIClient, telegram_data: ModelTelegramData) -> None:
     if user_model.action is not None:
-        await user_model.action.finish()
+        await user_model.await_finish_action()
     
     user_model.initiate_action(ACTION_WITHDRAW)
     
     response = await api_client.initiate_withdraw(amount=0)
     if response.is_error:
-        await msg.answer("Gagal memulai proses withdraw")
+        error_message = f"❌ Gagal memulai proses withdraw\nError: {response.get_error_message()}"
+        if isinstance(msg, CallbackQuery):
+            await msg.answer()
+            await msg.message.answer(error_message)
+        elif isinstance(msg, Message):
+            await msg.answer(error_message)
         return
 
     if response.data.get("pending_wd", False) == True:
@@ -60,6 +81,26 @@ async def withdraw_init(msg: Message | CallbackQuery, config: BotConfig, state: 
     user_model.action.set_action_data(ACTION_DATA_MAXIMUM_WITHDRAW, response.data.get("max_amount", 1000000))
     user_model.action.set_action_data(ACTION_DATA_WITHDRAW_MULTIPLES, response.data.get("withdraw_multiple", 1000))
     user_model.action.set_action_data(ACTION_DATA_WITHDRAW_DESTINATION, f"[{rekening_wd_bank}] {rekening_wd_account_number} - {rekening_wd_name}")
+    
+    ketentuan_withdraw = KETENTUAN_WITHDRAW.format(MINIMAL_WITHDRAW=user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW), MAXIMAL_WITHDRAW=user_model.action.get_action_data(ACTION_DATA_MAXIMUM_WITHDRAW), WITHDRAW_MULTIPLES=user_model.action.get_action_data(ACTION_DATA_WITHDRAW_MULTIPLES))
+    if isinstance(msg, CallbackQuery):
+        msg.answer()
+        
+    user_model.add_action_message_id((await bot.send_message(chat_id, ketentuan_withdraw)).message_id)
+    await user_model.save_to_state()
+    return await withdraw_ask_amount(msg, config, state, user_model, chat_id, telegram_data)
+
+'''
+Withdraw Ask Amount Function
+
+Entrypoint:
+- Init Function (withdraw_init)
+'''
+async def withdraw_ask_amount(event: CallbackQuery, config: BotConfig, state: FSMContext, user_model: ModelUser, chat_id: int, telegram_data: ModelTelegramData) -> None:
+    if user_model.action is None or user_model.action.current_action != ACTION_WITHDRAW:
+        await event.message.edit_text("Aksi tidak valid, silahkan ulangi proses withdraw", reply_markup=None)
+        await event.answer()
+        return
     
     cached_withdraw_amounts = telegram_data.get_persistent_data(KEY_CACHED_WITHDRAW_AMOUNTS)
     if cached_withdraw_amounts is None:
@@ -119,20 +160,24 @@ async def withdraw_input_amount(callback: CallbackQuery | Message, config: BotCo
         error_message = f"Jumlah withdraw tidak valid, minimal Rp.{user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW):,.0f} dan maksimal Rp.{user_model.action.get_action_data(ACTION_DATA_MAXIMUM_WITHDRAW):,.0f}"
         if isinstance(callback, CallbackQuery):
             user_model.add_action_message_id((await callback.message.answer(error_message, reply_markup=None)).message_id)
+            await user_model.save_to_state()
             await callback.answer()
             return
         else:
             user_model.add_action_message_id((await callback.answer(error_message)).message_id)
+            await user_model.save_to_state()
             return
 
     if amount % user_model.action.get_action_data(ACTION_DATA_WITHDRAW_MULTIPLES) != 0:
         error_message = f"Jumlah withdraw harus kelipatan Rp.{user_model.action.get_action_data(ACTION_DATA_WITHDRAW_MULTIPLES):,.0f}"
         if isinstance(callback, CallbackQuery):
             user_model.add_action_message_id((await callback.message.answer(error_message, reply_markup=None)).message_id)
+            await user_model.save_to_state()
             await callback.answer()
             return
         else:
             user_model.add_action_message_id((await callback.answer(error_message)).message_id)
+            await user_model.save_to_state()
             return
     
     user_model.action.set_action_data(ACTION_DATA_WITHDRAW_AMOUNT, amount)
@@ -169,17 +214,20 @@ async def withdraw_confirm_yes(callback: CallbackQuery, config: BotConfig, state
 
     response = await api_client.confirm_withdraw(amount=user_model.action.get_action_data(ACTION_DATA_WITHDRAW_AMOUNT), notes="")
     if response.is_error:
-        await bot.send_message(chat_id, f"Gagal melakukan withdraw: {response.get_error_message()}", reply_markup=None)
+        user_model.add_action_message_id((await bot.send_message(chat_id, f"Gagal melakukan withdraw: {response.get_error_message()}", reply_markup=None)).message_id)
+        await user_model.save_to_state()
         await callback.answer()
         return
 
     cached_withdraw_amounts = telegram_data.get_persistent_data(KEY_CACHED_WITHDRAW_AMOUNTS)
     if cached_withdraw_amounts is None:
         cached_withdraw_amounts = []
-    if len(cached_withdraw_amounts) >= 3 and user_model.action.get_action_data(ACTION_DATA_WITHDRAW_AMOUNT) not in cached_withdraw_amounts:
-        cached_withdraw_amounts = cached_withdraw_amounts[:2]
+    if user_model.action.get_action_data(ACTION_DATA_WITHDRAW_AMOUNT) not in cached_withdraw_amounts:
         cached_withdraw_amounts.insert(0, user_model.action.get_action_data(ACTION_DATA_WITHDRAW_AMOUNT))
+    if len(cached_withdraw_amounts) >= 3:
+        cached_withdraw_amounts = cached_withdraw_amounts[:3]
     telegram_data.set_persistent_data(KEY_CACHED_WITHDRAW_AMOUNTS, cached_withdraw_amounts)
+    await telegram_data.save_to_state()
     # await callback.message.edit_text("Withdraw berhasil, Silahkan tunggu proses withdraw selesai", reply_markup=None)
     await bot.send_message(chat_id, f"""<b>Withdraw berhasil</b>
 
@@ -198,7 +246,7 @@ async def withdraw_cancel(callback: CallbackQuery, config: BotConfig, state: FSM
         await callback.message.delete()
         return
 
-    await user_model.action.finish()
+    user_model.finish_action()
     await callback.answer("Proses withdraw dibatalkan")
     await user_model.save_to_state()
     return

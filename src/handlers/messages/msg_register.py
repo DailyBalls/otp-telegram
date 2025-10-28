@@ -28,7 +28,7 @@ async def msg_register_1_username(msg: types.Message, config: BotConfig, state: 
     current_state = await state.get_state()
     if current_state == GuestStates.register_1_ask_username:
         builder = InlineKeyboardBuilder()
-        builder.add(InlineKeyboardButton(text="Batalkan", callback_data="register_cancel"))
+        builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="register_cancel"))
         register_model.add_message_id((await msg.answer("Silahkan kirimkan password", reply_markup=builder.as_markup())).message_id)
         await state.set_state(GuestStates.register_2_ask_password)
 
@@ -66,7 +66,7 @@ async def msg_register_2_password(msg: types.Message, config: BotConfig, state: 
 async def msg_register_3_bank_name(msg: types.Message, config: BotConfig, state: FSMContext, register_model: ModelRegister) -> None:
     register_model.set_bank_name(msg.text)
     builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text="Batalkan", callback_data="register_cancel"))
+    builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="register_cancel"))
 
     current_state = await state.get_state()
     if current_state == GuestStates.register_3_ask_bank_name:
@@ -97,7 +97,7 @@ async def msg_register_4_bank_account_name(msg: types.Message, config: BotConfig
     if current_state == GuestStates.register_4_ask_bank_account_name:
         # register_model.add_message_id((await msg.answer("Nama rekening berhasil diterima")).message_id)
         builder = InlineKeyboardBuilder()
-        builder.add(InlineKeyboardButton(text="Batalkan", callback_data="register_cancel"))
+        builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="register_cancel"))
         register_model.add_message_id((await msg.answer("Silahkan kirimkan nomor rekening", reply_markup=builder.as_markup())).message_id)
         await state.set_state(GuestStates.register_5_ask_bank_account_number)
     elif current_state == GuestStates.register_4_edit_bank_account_name:

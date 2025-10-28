@@ -29,7 +29,10 @@ class UserAction(BaseModel):
     list_messages_ids: Optional[list[int]] = None
     list_menu_ids: Optional[list[int]] = None
 
-    async def finish(self) -> None:
+    '''
+    NOT FOR USE DIRECTLY, USE model_user.finish_action INSTEAD
+    '''
+    async def _finish(self) -> None:
         await self.delete_all_messages()
         self.current_action = None
         self.action_data = None
@@ -97,6 +100,7 @@ class ModelUser(BaseStateModel):
     temp_rekening_add: Optional[RekeningAdd] = None
     action: Optional[UserAction] = None
     pending_wd: Optional[bool] = False
+    pending_deposit: Optional[bool] = False
     
     def _get_state_key(self) -> str:
         """Override to use 'user' as the state key"""
@@ -161,13 +165,13 @@ class ModelUser(BaseStateModel):
         self._auto_save_if_enabled()
         return
 
-    async def _finish_action(self) -> None:
-        await self.action.delete_all_messages()
+    async def await_finish_action(self) -> None:
+        await self.action._finish()
         self.action = None
         await self.save_to_state()
 
     def finish_action(self) -> None:
-        asyncio.create_task(self._finish_action())
+        asyncio.create_task(self.await_finish_action())
         return
 
     def add_action_message_id(self, message_id: int) -> None:

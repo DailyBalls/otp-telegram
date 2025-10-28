@@ -11,7 +11,7 @@ from handlers.messages.msg_register import msg_register_1_username, msg_register
 from handlers.messages.msg_deposit import msg_deposit_ask_amount
 from handlers.messages.msg_game import msg_game_search
 
-from handlers.multi import multi_authentication, multi_menu, multi_withdraw
+from handlers.multi import multi_authentication, multi_deposit, multi_menu, multi_withdraw
 from utils.filters import StatesGroup, Text
 from handlers.middlewares.verify_private_chat import VerifyPrivateChatMiddleware
 
@@ -54,17 +54,21 @@ register_router.message.register(msg_register_5_bank_account_number, GuestStates
 message_router.include_router(register_router)
 
 
-# message_router.message.register(msg_register_6_confirm_register, GuestStates.register_6_ask_confirm_register)
+authenticated_router = Router()
+authenticated_router.message.filter(StatesGroup(LoggedInStates))
 
-authenticated_only_router = Router()
-authenticated_only_router.message.filter(StatesGroup(LoggedInStates))
-authenticated_only_router.message.middleware(AuthenticatedSessionMiddleware())
-authenticated_only_router.message.register(multi_authentication.logout, Text(data="logout"))
-authenticated_only_router.message.register(multi_menu.logged_in_menu, Text(data="menu"))
-authenticated_only_router.message.register(msg_deposit_ask_amount, LoggedInStates.deposit_ask_amount)
-authenticated_only_router.message.register(msg_game_search, LoggedInStates.game_search)
-authenticated_only_router.message.register(msg_rekening_ask_bank_account_name, LoggedInStates.rekening_add_2_ask_bank_account_name)
-authenticated_only_router.message.register(msg_rekening_ask_bank_account_number, LoggedInStates.rekening_add_3_ask_bank_account_number)
-authenticated_only_router.message.register(multi_withdraw.withdraw_init, Text(data="withdraw"))
-authenticated_only_router.message.register(multi_withdraw.withdraw_input_amount, LoggedInStates.withdraw_ask_amount)
-message_router.include_router(authenticated_only_router)
+## Menu Message Handlers
+authenticated_router.message.middleware(AuthenticatedSessionMiddleware())
+authenticated_router.message.register(multi_authentication.logout, Text(data="logout"))
+authenticated_router.message.register(multi_menu.logged_in_menu, Text(data="menu"))
+authenticated_router.message.register(multi_withdraw.withdraw_init, Text(data="withdraw"))
+authenticated_router.message.register(multi_deposit.deposit_init, Text(data="deposit"))
+authenticated_router.message.register(multi_deposit.deposit_submit_note, LoggedInStates.deposit_ask_note)
+
+## Action Message Handlers
+authenticated_router.message.register(multi_deposit.deposit_submit_amount, LoggedInStates.deposit_ask_amount)
+authenticated_router.message.register(msg_game_search, LoggedInStates.game_search)
+authenticated_router.message.register(msg_rekening_ask_bank_account_name, LoggedInStates.rekening_add_2_ask_bank_account_name)
+authenticated_router.message.register(msg_rekening_ask_bank_account_number, LoggedInStates.rekening_add_3_ask_bank_account_number)
+authenticated_router.message.register(multi_withdraw.withdraw_input_amount, LoggedInStates.withdraw_ask_amount)
+message_router.include_router(authenticated_router)

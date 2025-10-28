@@ -14,7 +14,7 @@ from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddl
 from handlers.middlewares.verify_private_chat import VerifyPrivateChatMiddleware
 from utils.filters import Text, TextPrefix
 from handlers.middlewares.verify_contact import VerifyContactMiddleware
-from handlers.multi import multi_authentication, multi_withdraw
+from handlers.multi import multi_authentication, multi_withdraw, multi_deposit
 
 
 callback_router = Router()
@@ -37,14 +37,24 @@ callback_router.include_router(register_router)
 logged_in_router = Router()
 logged_in_router.callback_query.middleware(AuthenticatedSessionMiddleware())
 # Deposit callbacks
-logged_in_router.callback_query.register(callback_deposit_init, Text(data="deposit_init"))
-logged_in_router.callback_query.register(callback_deposit_ask_payment_method, TextPrefix(prefix="deposit_ask_method_"))
-logged_in_router.callback_query.register(callback_deposit_ask_channel, TextPrefix(prefix="deposit_ask_channel_"))
+logged_in_router.callback_query.register(multi_deposit.deposit_init, Text(data="deposit_init"))
+logged_in_router.callback_query.register(multi_deposit.deposit_ask_method, Text(data="deposit_ask_method"))
+logged_in_router.callback_query.register(multi_deposit.deposit_submit_amount, TextPrefix(prefix="deposit_submit_amount_"))
+logged_in_router.callback_query.register(multi_deposit.deposit_channel, TextPrefix(prefix="deposit_channel_"))
+logged_in_router.callback_query.register(multi_deposit.deposit_submit_method, TextPrefix(prefix="deposit_submit_method_"))
+logged_in_router.callback_query.register(multi_deposit.deposit_ask_channel, Text(data="deposit_ask_channel"))
+logged_in_router.callback_query.register(multi_deposit.deposit_ask_user_bank, Text(data="deposit_ask_user_bank"))
+logged_in_router.callback_query.register(multi_deposit.deposit_choose_user_bank, TextPrefix(prefix="deposit_choose_user_bank_"))
+logged_in_router.callback_query.register(multi_deposit.deposit_confirm_promo, TextPrefix(prefix="deposit_confirm_promo_"))
+logged_in_router.callback_query.register(multi_deposit.deposit_choose_promo, TextPrefix(prefix="deposit_choose_promo_"))
+logged_in_router.callback_query.register(multi_deposit.deposit_submit_note, Text(data="deposit_submit_note"))
+logged_in_router.callback_query.register(multi_deposit.deposit_confirm_submit, Text(data="deposit_confirm_submit"))
+logged_in_router.callback_query.register(multi_deposit.deposit_confirm_submit, Text(data="deposit_confirm_submit_retry"))
 logged_in_router.callback_query.register(callback_deposit_confirm_channel, TextPrefix(prefix="deposit_confirm_channel_"))
 logged_in_router.callback_query.register(callback_deposit_confirm_yes, TextPrefix(prefix="deposit_confirm_yes_"))
-logged_in_router.callback_query.register(callback_deposit_cancel, Text(data="deposit_cancel"))
+logged_in_router.callback_query.register(multi_deposit.deposit_cancel, Text(data="deposit_cancel"))
 logged_in_router.callback_query.register(callback_deposit_cancel, TextPrefix(prefix="deposit_confirm_no_"))
-
+logged_in_router.callback_query.register(multi_deposit.deposit_back_button, TextPrefix(prefix="deposit_back_button_"))
 # Withdraw callbacks
 logged_in_router.callback_query.register(multi_withdraw.withdraw_init, Text(data="withdraw_init"))
 logged_in_router.callback_query.register(multi_withdraw.withdraw_input_amount, TextPrefix(prefix="withdraw_amount_"))

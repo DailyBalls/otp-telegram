@@ -15,6 +15,7 @@ from services.otp_services.exceptions import InvalidSessionError
 from services.otp_services.models import APIResponse
 import utils.fsm as fsm_utils
 from bot_instance import GuestStates, bot
+import utils.models as handler_utils
 
 
 class AuthenticatedSessionMiddleware(BaseModelMiddleware):
@@ -64,13 +65,17 @@ class AuthenticatedSessionMiddleware(BaseModelMiddleware):
         except InvalidSessionError as e:
             print("InvalidSessionError")
             print(e)
+            if user_model is None:
+                user_model = await handler_utils.load_model(ModelUser, self.fsm_context)
+            print("user_model is None : ", user_model is None)
             if user_model:
-                await user_model.logout()
                 await user_model.delete_all_messages()
                 await user_model.delete_from_state()
+                await user_model.logout()
 
             await self.fsm_context.set_state(state=None)
             await callback_auth_clear(data['config'], self.fsm_context)
+            await api_client.clear_cookies()
             if isinstance(event, CallbackQuery):
                 await bot.send_message(event.message.chat.id, "Sesi telah berakhir, silahkan login kembali", reply_markup=get_guest_menu_builder().as_markup(resize_keyboard=True))
                 await multi_menu.guest_menu(event.message, data['config'], self.fsm_context)

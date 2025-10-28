@@ -211,7 +211,7 @@ async def callback_deposit_confirm_yes(callback: types.CallbackQuery, config: Bo
     elif deposit_channel_type == "BANK":
         await callback.message.answer("Silahkan transfer ke Bank <b>{deposit_channel_code}</b>")
     
-    await action_model.finish_action()
+    action_model.finish_action()
     return
 
 async def callback_deposit_cancel(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, user_model: ModelUser) -> None:
@@ -221,7 +221,7 @@ async def callback_deposit_cancel(callback: types.CallbackQuery, config: BotConf
         await state.set_state(LoggedInStates.main_menu)
 
     if action_model is not None and action_model.current_action == ACTION_DEPOSIT:
-        await action_model.finish_action()
+        action_model.finish_action()
 
     await callback.answer("Proses deposit dibatalkan")
     return

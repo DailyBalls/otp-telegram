@@ -3,8 +3,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 def registration_confirm_and_edit() -> InlineKeyboardBuilder:
     builder_confirm = InlineKeyboardBuilder()
-    builder_confirm.add(InlineKeyboardButton(text="Ya", callback_data="register_confirm_yes"))
-    builder_confirm.add(InlineKeyboardButton(text="Batalkan", callback_data="register_cancel"))
+    builder_confirm.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="register_cancel"))
+    builder_confirm.add(InlineKeyboardButton(text="✅ Konfirmasi", callback_data="register_confirm_yes"))
     builder_confirm.adjust(2)
 
     builder_edit = InlineKeyboardBuilder()

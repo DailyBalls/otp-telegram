@@ -49,14 +49,14 @@ async def callback_game_list(callback: types.CallbackQuery, config: BotConfig, s
     if page > 1:
         navigation_builder.add(InlineKeyboardButton(text="⬅️ Sebelumnya", callback_data=f"games_list_{game_type}_{page - 1}"))
     else :
-        navigation_builder.add(InlineKeyboardButton(text="❌ Sebelumnya", callback_data=f"action_reply_callback_Sudah_Halaman_Pertama"))
+        navigation_builder.add(InlineKeyboardButton(text="🚫 Sebelumnya", callback_data=f"action_reply_callback_Sudah_Halaman_Pertama"))
     
     navigation_builder.add(InlineKeyboardButton(text="Tutup", callback_data=f"action_close_with_answer_"))
 
     if games.data['pagination']['hasMore'] == True:
         navigation_builder.add(InlineKeyboardButton(text="Selanjutnya ➡️", callback_data=f"games_list_{game_type}_{page + 1}"))
     else:
-        navigation_builder.add(InlineKeyboardButton(text="Selanjutnya ❌", callback_data=f"action_reply_callback_Sudah_Halaman_Terakhir"))
+        navigation_builder.add(InlineKeyboardButton(text="Selanjutnya 🚫", callback_data=f"action_reply_callback_Sudah_Halaman_Terakhir"))
     navigation_builder.adjust(3)
     builder.attach(navigation_builder)
 
@@ -149,14 +149,14 @@ async def _game_search(user_model: ModelUser, search_base64: str, page: int, api
     if page > 1:
         navigation_builder.add(InlineKeyboardButton(text="⬅️ Sebelumnya", callback_data=f"game_search_{page - 1}_{search_base64}"))
     else :
-        navigation_builder.add(InlineKeyboardButton(text="❌ Sebelumnya", callback_data=f"action_reply_callback_Sudah_Halaman_Pertama"))
+        navigation_builder.add(InlineKeyboardButton(text="🚫 Sebelumnya", callback_data=f"action_reply_callback_Sudah_Halaman_Pertama"))
     navigation_builder.add(InlineKeyboardButton(text="Tutup", callback_data=f"action_close_with_answer_"))
 
     if api_response.data['pagination']['hasMore'] == True:
         navigation_builder.add(InlineKeyboardButton(text="Selanjutnya ➡️", callback_data=f"game_search_{page + 1}_{search_base64}"))
         print(f"game_search_{search_query}_{page + 1}")
     else:
-        navigation_builder.add(InlineKeyboardButton(text="Selanjutnya ❌", callback_data=f"action_reply_callback_Sudah_Halaman_Terakhir"))
+        navigation_builder.add(InlineKeyboardButton(text="Selanjutnya 🚫", callback_data=f"action_reply_callback_Sudah_Halaman_Terakhir"))
     navigation_builder.adjust(3)
     builder.attach(navigation_builder)
 

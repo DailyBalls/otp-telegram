@@ -63,22 +63,28 @@ async def login_init(callback: CallbackQuery | Message, config: BotConfig, state
     try:
         # Make POST request to ask-login endpoint
         response = await api_client.ask_auth()
-        
-        if response.success:
-            # Success case - check if captcha is required
-            captcha_required = response.data.get('captcha', False) if response.data else False
-            login_model.is_required_captcha = captcha_required
-            builder = InlineKeyboardBuilder()
-            builder.add(InlineKeyboardButton(text="Batalkan", callback_data="login_cancel"))
-            login_model.add_message_id((await bot.send_message(chat_id, """
+
+        if response.is_error:
+            error_message = f"🚨 Gagal memulai proses login 🚨\nError: {response.get_error_message()}"
+            if isinstance(callback, CallbackQuery):
+                await callback.answer()
+                await callback.message.answer(error_message)
+                return
+            elif isinstance(callback, Message):
+                await callback.answer(error_message)
+                return
+    
+        # Success case - check if captcha is required
+        captcha_required = response.data.get('captcha', False) if response.data else False
+        login_model.is_required_captcha = captcha_required
+        builder = InlineKeyboardBuilder()
+        builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="login_cancel"))
+        login_model.add_message_id((await bot.send_message(chat_id, """
 Silahkan kirimkan username
 """, reply_markup=builder.as_markup())).message_id)
 
-            await state.set_state(GuestStates.login_1_ask_username)
-        else:
-            login_model.add_message_id((await bot.send_message(chat_id, "Gagal memulai proses login")).message_id)
-            login_model.add_message_id((await bot.send_message(chat_id, f"Error: {response.get_error_message()}")).message_id)
-        
+        await state.set_state(GuestStates.login_1_ask_username)
+                
     except Exception as e:
         login_model.add_message_id((await bot.send_message(chat_id, "Terjadi kesalahan sistem")).message_id)
     finally:
@@ -142,7 +148,7 @@ async def login_submit_username(callback: Message, config: BotConfig, state: FSM
     login_model.username = callback.text
 
     builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text="Batalkan", callback_data="login_cancel"))
+    builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="login_cancel"))
     login_model.add_message_id((await callback.answer("Silahkan kirimkan password", reply_markup=builder.as_markup())).message_id)
     await state.set_state(GuestStates.login_2_ask_password)
 
@@ -163,7 +169,7 @@ async def login_submit_password(callback: Message, config: BotConfig, state: FSM
 
     if login_model.is_required_captcha:
         builder = InlineKeyboardBuilder()
-        builder.add(InlineKeyboardButton(text="Batalkan", callback_data="login_cancel"))
+        builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="login_cancel"))
         
         login_model.add_message_id((await callback.answer("Silahkan kirimkan captcha", reply_markup=builder.as_markup())).message_id)
         await state.set_state(GuestStates.login_3_ask_captcha)
@@ -249,17 +255,16 @@ async def register_init(callback: CallbackQuery | Message, config: BotConfig, st
             return
 
     api_client = OTPAPIClient(state=state, user_id=callback.from_user.id, base_url=config.otp_host)
-    ask_auth = await api_client.ask_auth()
-    if ask_auth.is_error:
+    response = await api_client.ask_auth()
+    if response.is_error:
+        error_message = f"🚨 Gagal memulai proses register 🚨\nError: {response.get_error_message()}"
         if isinstance(callback, CallbackQuery):
-            await callback.answer(f"Gagal memulai proses register")
+            await callback.answer()
+            await callback.message.answer(error_message)
+            return
         elif isinstance(callback, Message):
-            await callback.reply(f"Gagal memulai proses register")
-        print("There is an error when asking for auth to OTP API", ask_auth.error)
-        return
- 
-    if isinstance(callback, CallbackQuery):
-        await callback.answer("Memulai proses register...")
+            await callback.answer(error_message)
+            return
 
     chat_id: int | None = None
     message_id: int | None = None
@@ -273,8 +278,8 @@ async def register_init(callback: CallbackQuery | Message, config: BotConfig, st
     register_model = ModelRegister(
         state=state,
         chat_id=chat_id,
-        bank_list=ask_auth.data.get("bank_list", []),
-        is_required_captcha=ask_auth.data.get("captcha", False),
+        bank_list=response.data.get("bank_list", []),
+        is_required_captcha=response.data.get("captcha", False),
         phone_number=telegram_data.contact_phone,
     )
 
@@ -282,7 +287,7 @@ async def register_init(callback: CallbackQuery | Message, config: BotConfig, st
         register_model.add_message_id(message_id)
 
     builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text="Batalkan", callback_data="register_cancel"))
+    builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="register_cancel"))
     register_model.add_message_id((await bot.send_message(chat_id, "Silahkan kirimkan username", reply_markup=builder.as_markup())).message_id)
     await register_model.save_to_state()
     await state.set_state(GuestStates.register_1_ask_username)

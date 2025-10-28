@@ -34,7 +34,10 @@ async def logged_in_menu(msg: Message, config: BotConfig, state: FSMContext, use
     menu_model.logged_in = True
     
     builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text="💲Deposit", callback_data="deposit_init"))
+    if user_model.pending_deposit == False:
+        builder.add(InlineKeyboardButton(text="💲Deposit", callback_data="deposit_init"))
+    else:
+        builder.add(InlineKeyboardButton(text="🚧𝙳̶𝚎̶𝚙̶𝚘̶𝚜̶𝚒̶𝚝̶", callback_data="deposit_init"))
     if user_model.pending_wd == False:
         builder.add(InlineKeyboardButton(text="💰Withdraw", callback_data="withdraw_init"))
     else:
@@ -44,20 +47,20 @@ async def logged_in_menu(msg: Message, config: BotConfig, state: FSMContext, use
     builder.adjust(2)
 
     play_menu_builder = InlineKeyboardBuilder()
-    # play_menu_builder.add(InlineKeyboardButton(text="🎰 Play Slot 🎰", callback_data="games_list_slot"))
-    # play_menu_builder.add(InlineKeyboardButton(text="♠️ Play Casino ♠️", callback_data="games_list_casino"))
-    # play_menu_builder.add(InlineKeyboardButton(text="🏈 Play Sports 🏈", callback_data="games_list_sports"))
-    # play_menu_builder.add(InlineKeyboardButton(text="🐔 Play Sabung 🐔", callback_data="games_list_sabung"))
-    # play_menu_builder.add(InlineKeyboardButton(text="🕹️ Play Arcade 🕹️", callback_data="games_list_arcade"))
-    # play_menu_builder.add(InlineKeyboardButton(text="🎬 Play Interactive 🎬", callback_data="games_list_interactive"))
-    # play_menu_builder.add(InlineKeyboardButton(text="🔎 Search Game 🔎", callback_data="game_search_init"))
-    play_menu_builder.add(InlineKeyboardButton(text="🎰 Play Slot 🎰", callback_data="provider_list_slot"))
-    play_menu_builder.add(InlineKeyboardButton(text="♠️ Play Casino ♠️", callback_data="provider_list_casino"))
-    play_menu_builder.add(InlineKeyboardButton(text="🏈 Play Sports 🏈", callback_data="provider_list_sports"))
-    play_menu_builder.add(InlineKeyboardButton(text="🐔 Play Sabung 🐔", callback_data="provider_list_sabung"))
-    play_menu_builder.add(InlineKeyboardButton(text="🕹️ Play Arcade 🕹️", callback_data="provider_list_arcade"))
-    play_menu_builder.add(InlineKeyboardButton(text="🎬 Play Interactive 🎬", callback_data="provider_list_interactive"))
+    play_menu_builder.add(InlineKeyboardButton(text="🎰 Play Slot 🎰", callback_data="games_list_slot"))
+    play_menu_builder.add(InlineKeyboardButton(text="♠️ Play Casino ♠️", callback_data="games_list_casino"))
+    play_menu_builder.add(InlineKeyboardButton(text="🏈 Play Sports 🏈", callback_data="games_list_sports"))
+    play_menu_builder.add(InlineKeyboardButton(text="🐔 Play Sabung 🐔", callback_data="games_list_sabung"))
+    play_menu_builder.add(InlineKeyboardButton(text="🕹️ Play Arcade 🕹️", callback_data="games_list_arcade"))
+    play_menu_builder.add(InlineKeyboardButton(text="🎬 Play Interactive 🎬", callback_data="games_list_interactive"))
     play_menu_builder.add(InlineKeyboardButton(text="🔎 Search Game 🔎", callback_data="game_search_init"))
+    # play_menu_builder.add(InlineKeyboardButton(text="🎰 Play Slot 🎰", callback_data="provider_list_slot"))
+    # play_menu_builder.add(InlineKeyboardButton(text="♠️ Play Casino ♠️", callback_data="provider_list_casino"))
+    # play_menu_builder.add(InlineKeyboardButton(text="🏈 Play Sports 🏈", callback_data="provider_list_sports"))
+    # play_menu_builder.add(InlineKeyboardButton(text="🐔 Play Sabung 🐔", callback_data="provider_list_sabung"))
+    # play_menu_builder.add(InlineKeyboardButton(text="🕹️ Play Arcade 🕹️", callback_data="provider_list_arcade"))
+    # play_menu_builder.add(InlineKeyboardButton(text="🎬 Play Interactive 🎬", callback_data="provider_list_interactive"))
+    # play_menu_builder.add(InlineKeyboardButton(text="🔎 Search Game 🔎", callback_data="game_search_init"))
     play_menu_builder.adjust(1)  # One button per row
 
     builder.attach(play_menu_builder)

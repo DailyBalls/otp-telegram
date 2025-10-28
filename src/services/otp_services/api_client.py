@@ -1,6 +1,7 @@
 """
 Simple OTP API Client
 """
+import hashlib
 import aiohttp
 from typing import Dict, Any, Optional
 from .models import APIResponse
@@ -113,16 +114,24 @@ class OTPAPIClient:
                         return await self._make_request(method, endpoint, data, custom_headers)
                     return APIResponse(response_data)
         except Exception as e:
+            md5_hash = hashlib.md5(str(e).encode()).hexdigest()
             # Return error response for network issues
             error_response = {
                 "error": {
                     "code": 500,
-                    "message": f"Network error: {str(e)[0:3]}..."
+                    "message": f"Mohon hubungi admin\nKode error: <code>{md5_hash}</code>"
                 },
                 "data": None,
                 "metadata": {}
             }
-            print("error requesting to OTP API", e)
+            print("--------------------------------")
+            print("Telegram ID: ", self.telegram_id)
+            print("URL: ", f"{self.base_url}{endpoint}")
+            print("METHOD: ", method)
+            print("DATA: ", data)
+            print("CUSTOM HEADERS: ", custom_headers)
+            print("ERROR HASH: ", md5_hash)
+            print("ERROR: ", e)
             return APIResponse(error_response)
     
     async def logout(self) -> APIResponse:
@@ -214,6 +223,18 @@ class OTPAPIClient:
     async def initiate_deposit(self) -> APIResponse:
         """POST request to /api/v1/telegram/me/deposit/initiate"""
         return await self._make_request("POST", "/api/v1/telegram/me/deposit/initiate")
+
+    @authenticated
+    async def confirm_deposit_bank(self, user_bank_id: int, deposit_bank_id: int, amount: int, promo_id: int = None, notes: str = "") -> APIResponse:
+        """POST request to /api/v1/telegram/me/deposit/confirm"""
+        data = {
+            "rekening_user": user_bank_id,
+            "rekening_tujuan": deposit_bank_id,
+            "jumlah": amount,
+            "catatan": notes,
+            "promo": str(promo_id) if promo_id is not None else "0",
+        }
+        return await self._make_request("POST", "/api/v1/telegram/me/deposit/confirm/bank", data)
 
     async def list_games_by_type(self, game_type = "all", page: int = 1) -> APIResponse:
         """GET request to /api/v1/telegram/game/{game_type}?page={page}"""

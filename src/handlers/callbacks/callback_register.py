@@ -70,7 +70,7 @@ async def callback_register_bank(callback: types.CallbackQuery, config: BotConfi
     elif current_state == GuestStates.register_3_edit_bank_name:
         register_model.add_message_id((await send_confirmation_register_message(callback.message, register_model)).message_id)
         await state.set_state(GuestStates.register_6_ask_confirm_register)
-    register_model.save_to_state()
+    await register_model.save_to_state()
     return
 
 async def callback_register_confirm_yes(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, register_model: ModelRegister) -> None:

@@ -3,5 +3,5 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 def action_cancel() -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text="Batalkan", callback_data="action_cancel"))
+    builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="action_cancel"))
     return builder
