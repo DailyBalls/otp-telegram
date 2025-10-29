@@ -151,9 +151,11 @@ async def withdraw_input_amount(callback: CallbackQuery | Message, config: BotCo
         if isinstance(callback, CallbackQuery):
             amount = int(callback.data.replace("withdraw_amount_", ""))
         else:
+            user_model.add_action_message_id(message_id)
             amount = int(callback.text)
     except ValueError:
         user_model.add_action_message_id((await callback.answer("Jumlah withdraw harus berupa angka, contoh: 10000")).message_id)
+        await user_model.save_to_state()
         return
     
     if amount is None or amount < user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW) or amount > user_model.action.get_action_data(ACTION_DATA_MAXIMUM_WITHDRAW):
@@ -181,7 +183,6 @@ async def withdraw_input_amount(callback: CallbackQuery | Message, config: BotCo
             return
     
     user_model.action.set_action_data(ACTION_DATA_WITHDRAW_AMOUNT, amount)
-    user_model.add_action_message_id(message_id)
     message = f"""
 <b>Konfirmasi Withdraw:</b>
 
