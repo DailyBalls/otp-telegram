@@ -1,7 +1,9 @@
+from io import BytesIO
 from typing import List, Optional
 from aiogram.types import InlineKeyboardButton
 from aiogram.types.callback_query import CallbackQuery
 from aiogram.fsm.context import FSMContext
+from aiogram.types.input_file import BufferedInputFile
 from aiogram.types.message import Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from pydantic import BaseModel
@@ -13,6 +15,7 @@ from services.otp_services.api_client import OTPAPIClient
 import utils.models as model_utils
 import re
 import unicodedata
+import base64
 ACTION_DEPOSIT = "deposit"
 KEY_CACHED_DEPOSIT_AMOUNTS = "cached_deposit_amounts"
 ACTION_DATA_MINIMUM_DEPOSIT = "minimum_deposit"
@@ -852,8 +855,17 @@ async def deposit_confirm_submit(event: CallbackQuery, config: BotConfig, state:
             message += f"Silahkan melakukan pembayaran dengan scan QRIS berikut:"
         elif deposit_method == "VA":
             message += f"Silahkan melakukan transfer ke Virtual Account berikut: <code>{response.data.get('payment')}</code>"
-    await event.message.answer(message)
-    if deposit_method == "QRIS": await event.message.answer_photo(photo=response.data.get('payment'))
+    user_model.add_message_id((await event.message.answer(message)).message_id)
+    if deposit_method == "QRIS": 
+        if payment_gateway['name'] == "SIPAY":
+            if response.data.get('payment') is None:
+                user_model.add_action_message_id((await event.message.answer("Gagal mengkonfirmasi deposit: Kode Pembayaran tidak ditemukan")).message_id)
+                return
+            decoded_image_bytes = base64.b64decode(response.data.get('payment').replace("data:image/png;base64,", ""))
+            image_buffer = BytesIO(decoded_image_bytes)
+            user_model.add_message_id((await event.message.answer_photo(photo=BufferedInputFile(image_buffer.getvalue(), filename="payment.png"))).message_id)
+        else:
+            user_model.add_message_id((await event.message.answer_photo(photo=response.data.get('payment'))).message_id)
     await user_model.await_finish_action()
     await user_model.save_to_state()
     await state.set_state(LoggedInStates.main_menu)
