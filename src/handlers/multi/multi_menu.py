@@ -64,16 +64,16 @@ async def logged_in_menu(msg: Message, config: BotConfig, state: FSMContext, use
     builder = InlineKeyboardBuilder()
     if user_model.is_active():
         if user_model.pending_deposit == False:
-            builder.add(InlineKeyboardButton(text="💲Deposit", callback_data="deposit_init"))
+            builder.add(InlineKeyboardButton(text="💲 Deposit", callback_data="deposit_init"))
         else:
-            builder.add(InlineKeyboardButton(text="🚧𝙳̶𝚎̶𝚙̶𝚘̶𝚜̶𝚒̶𝚝̶", callback_data="deposit_init"))
+            builder.add(InlineKeyboardButton(text="🚧 𝙳̶𝚎̶𝚙̶𝚘̶𝚜̶𝚒̶𝚝̶", callback_data="deposit_init"))
         if user_model.pending_wd == False:
-            builder.add(InlineKeyboardButton(text="💰Withdraw", callback_data="withdraw_init"))
+            builder.add(InlineKeyboardButton(text="💰 Withdraw", callback_data="withdraw_init"))
         else:
-            builder.add(InlineKeyboardButton(text="🚧𝚆̶𝚒̶𝚝̶𝚑̶𝚍̶𝚛̶𝚊̶𝚠̶", callback_data="withdraw_init"))
-    builder.add(InlineKeyboardButton(text="💳Rekening", callback_data="rekening_list"))
-    builder.add(InlineKeyboardButton(text="↩️Logout", callback_data="logout"))
-    builder.add(InlineKeyboardButton(text="💬Hubungi Kami", callback_data="menu_social_media"))
+            builder.add(InlineKeyboardButton(text="🚧 𝚆̶𝚒̶𝚝̶𝚑̶𝚍̶𝚛̶𝚊̶𝚠̶", callback_data="withdraw_init"))
+    builder.add(InlineKeyboardButton(text="💳 Rekening", callback_data="rekening_list"))
+    builder.add(InlineKeyboardButton(text="↩️ Logout", callback_data="logout"))
+    builder.add(InlineKeyboardButton(text="💬 Hubungi Kami", callback_data="menu_social_media"))
     builder.adjust(2)
 
     play_menu_builder = InlineKeyboardBuilder()
@@ -108,6 +108,7 @@ Selamat datang di <b>{config.site_name}</b>!
 Halo <b>{user_model.username}</b>!
 Credit: <b>Rp {float(user_model.credit):,.0f}</b>
 {placeholder_text}
+
 Silahkan pilih menu yang tersedia
 """, reply_markup=builder.as_markup())).message_id
 
