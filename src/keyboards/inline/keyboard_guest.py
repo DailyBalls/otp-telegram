@@ -25,5 +25,5 @@ def bank_selection(bank_list: list[str], show_cancel: bool = True) -> InlineKeyb
         builder.add(InlineKeyboardButton(text=bank, callback_data=f"register_bank_{bank}"))
     builder.adjust(2)
     if show_cancel:
-        builder.add(InlineKeyboardButton(text="Batalkan", callback_data="register_cancel"))
+        builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="register_cancel"))
     return builder

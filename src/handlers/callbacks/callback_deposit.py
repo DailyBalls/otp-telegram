@@ -45,7 +45,7 @@ async def callback_deposit_init(callback: types.CallbackQuery, config: BotConfig
 
     await state.set_state(LoggedInStates.deposit_ask_amount)
     builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text="Batalkan", callback_data="deposit_cancel"))
+    builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="deposit_cancel"))
     builder.adjust(1)
     answer = await callback.message.answer("Masukkan jumlah deposit, contoh: 10000", reply_markup=builder.as_markup())
     action_model.add_message_id(answer.message_id)
@@ -133,8 +133,8 @@ async def callback_deposit_ask_channel(callback: types.CallbackQuery, config: Bo
         builder.adjust(1)
 
         cancel_back_builder = InlineKeyboardBuilder()
-        cancel_back_builder.add(InlineKeyboardButton(text="Kembali", callback_data=f"deposit_ask_method_{deposit_channel_amount}"))
-        cancel_back_builder.add(InlineKeyboardButton(text="Batalkan", callback_data=f"action_cancel"))
+        cancel_back_builder.add(InlineKeyboardButton(text="🔙 Kembali", callback_data=f"deposit_ask_method_{deposit_channel_amount}"))
+        cancel_back_builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data=f"action_cancel"))
         cancel_back_builder.adjust(2)
         builder.attach(cancel_back_builder)
 

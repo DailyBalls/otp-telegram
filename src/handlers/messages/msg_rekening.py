@@ -20,7 +20,7 @@ async def msg_rekening_ask_bank_account_name(msg: types.Message, config: BotConf
     user_model.temp_rekening_add.bank_account_name = msg.text
 
     builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text="Batalkan", callback_data="rekening_add_cancel"))
+    builder.add(InlineKeyboardButton(text="❌Batalkan", callback_data="rekening_add_cancel"))
 
     user_model.add_rekening_message_id((await msg.answer("Silahkan kirimkan nomor rekening", reply_markup=builder.as_markup())).message_id)
     await state.set_state(LoggedInStates.rekening_add_3_ask_bank_account_number)

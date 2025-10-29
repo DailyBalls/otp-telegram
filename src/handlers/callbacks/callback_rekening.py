@@ -95,7 +95,7 @@ async def callback_rekening_add_bank(callback: CallbackQuery, config: BotConfig,
     await callback.message.edit_text(f"Bank <b>{bank_name}</b> berhasil dipilih", reply_markup=None)
     await callback.answer(f"{bank_name} berhasil dipilih")
     builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text="Batalkan", callback_data="rekening_add_cancel"))
+    builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="rekening_add_cancel"))
     
     user_model.add_rekening_message_id((await callback.message.answer("Silahkan kirimkan nama rekening", reply_markup=builder.as_markup())).message_id)
     await user_model.save_to_state()

@@ -64,7 +64,7 @@ async def callback_register_bank(callback: types.CallbackQuery, config: BotConfi
     register_model.add_message_id((await callback.message.answer(f"Bank <b>{register_bank_name}</b> berhasil dipilih")).message_id)
     if current_state == GuestStates.register_3_ask_bank_name:
         builder = InlineKeyboardBuilder()
-        builder.add(types.InlineKeyboardButton(text="Batalkan", callback_data="register_cancel"))
+        builder.add(types.InlineKeyboardButton(text="❌ Batalkan", callback_data="register_cancel"))
         register_model.add_message_id((await callback.message.answer("Silahkan kirimkan nama rekening", reply_markup=builder.as_markup())).message_id)
         await state.set_state(GuestStates.register_4_ask_bank_account_name)
     elif current_state == GuestStates.register_3_edit_bank_name:

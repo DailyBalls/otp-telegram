@@ -66,7 +66,7 @@ async def logged_in_menu(msg: Message, config: BotConfig, state: FSMContext, use
     builder.attach(play_menu_builder)
 
     menu_id = (await msg.answer(f"""
-Selamat datang di <b>{config.web_id}</b>!
+Selamat datang di <b>{config.site_name}</b>!
 Halo <b>{user_model.username}</b>!
 Credit: <b>Rp {float(user_model.credit):,.0f}</b>
 Rank: <b>{user_model.rank}</b>
