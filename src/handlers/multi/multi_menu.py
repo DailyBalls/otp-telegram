@@ -78,12 +78,12 @@ async def logged_in_menu(msg: Message, config: BotConfig, state: FSMContext, use
 
     play_menu_builder = InlineKeyboardBuilder()
     if user_model.is_active():
-        play_menu_builder.add(InlineKeyboardButton(text="🎰 Play Slot 🎰", callback_data="games_list_slot"))
-        play_menu_builder.add(InlineKeyboardButton(text="♠️ Play Casino ♠️", callback_data="games_list_casino"))
-        play_menu_builder.add(InlineKeyboardButton(text="🏈 Play Sports 🏈", callback_data="games_list_sports"))
-        play_menu_builder.add(InlineKeyboardButton(text="🐔 Play Sabung 🐔", callback_data="games_list_sabung"))
-        play_menu_builder.add(InlineKeyboardButton(text="🕹️ Play Arcade 🕹️", callback_data="games_list_arcade"))
-        play_menu_builder.add(InlineKeyboardButton(text="🎬 Play Interactive 🎬", callback_data="games_list_interactive"))
+        play_menu_builder.add(InlineKeyboardButton(text="🎰 Play Slot 🎰", callback_data="game_list_slot"))
+        play_menu_builder.add(InlineKeyboardButton(text="♠️ Play Casino ♠️", callback_data="game_list_casino"))
+        play_menu_builder.add(InlineKeyboardButton(text="🏈 Play Sports 🏈", callback_data="game_list_sports"))
+        play_menu_builder.add(InlineKeyboardButton(text="🐔 Play Sabung 🐔", callback_data="game_list_sabung"))
+        play_menu_builder.add(InlineKeyboardButton(text="🕹️ Play Arcade 🕹️", callback_data="game_list_arcade"))
+        play_menu_builder.add(InlineKeyboardButton(text="🎬 Play Interactive 🎬", callback_data="game_list_interactive"))
         play_menu_builder.add(InlineKeyboardButton(text="🔎 Search Game 🔎", callback_data="game_search_init"))
         # play_menu_builder.add(InlineKeyboardButton(text="🎰 Play Slot 🎰", callback_data="provider_list_slot"))
         # play_menu_builder.add(InlineKeyboardButton(text="♠️ Play Casino ♠️", callback_data="provider_list_casino"))
