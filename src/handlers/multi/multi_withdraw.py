@@ -13,7 +13,6 @@ import utils.models as model_utils
 
 ACTION_WITHDRAW                  = "withdraw"
 ACTION_DATA_MINIMUM_WITHDRAW     = "minimum_withdraw"
-ACTION_DATA_MAXIMUM_WITHDRAW     = "maximum_withdraw"
 ACTION_DATA_WITHDRAW_MULTIPLES   = "withdraw_multiples"
 ACTION_DATA_WITHDRAW_AMOUNT      = "withdraw_amount"
 ACTION_DATA_WITHDRAW_DESTINATION = "withdraw_destination"
@@ -32,12 +31,11 @@ Catatan :
 - Untuk penggantian rekening harap menghubungi CS kami
 
 Minimal Withdraw: <b>Rp.{MINIMAL_WITHDRAW:,.0f}</b>
-Maksimal Withdraw: <b>Rp.{MAXIMAL_WITHDRAW:,.0f}</b>
 Kelipatan Withdraw: <b>Rp.{WITHDRAW_MULTIPLES:,.0f}</b>
 """
 
-def is_valid_withdraw_amount(amount: int, minimum_withdraw: int, maximum_withdraw: int, withdraw_multiples: int) -> bool:
-    return amount <= maximum_withdraw and amount >= minimum_withdraw and amount % withdraw_multiples == 0
+def is_valid_withdraw_amount(amount: int, minimum_withdraw: int, withdraw_multiples: int) -> bool:
+    return amount >= minimum_withdraw and amount % withdraw_multiples == 0
 
 '''
 Withdraw Init Function
@@ -78,11 +76,10 @@ async def withdraw_init(msg: Message | CallbackQuery, config: BotConfig, state: 
     rekening_wd_bank = rekening_wd.get("bank", "")
 
     user_model.action.set_action_data(ACTION_DATA_MINIMUM_WITHDRAW, response.data.get("min_amount", 10000))
-    user_model.action.set_action_data(ACTION_DATA_MAXIMUM_WITHDRAW, response.data.get("max_amount", 1000000))
     user_model.action.set_action_data(ACTION_DATA_WITHDRAW_MULTIPLES, response.data.get("withdraw_multiple", 1000))
     user_model.action.set_action_data(ACTION_DATA_WITHDRAW_DESTINATION, f"[{rekening_wd_bank}] {rekening_wd_account_number} - {rekening_wd_name}")
     
-    ketentuan_withdraw = KETENTUAN_WITHDRAW.format(MINIMAL_WITHDRAW=user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW), MAXIMAL_WITHDRAW=user_model.action.get_action_data(ACTION_DATA_MAXIMUM_WITHDRAW), WITHDRAW_MULTIPLES=user_model.action.get_action_data(ACTION_DATA_WITHDRAW_MULTIPLES))
+    ketentuan_withdraw = KETENTUAN_WITHDRAW.format(MINIMAL_WITHDRAW=user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW), WITHDRAW_MULTIPLES=user_model.action.get_action_data(ACTION_DATA_WITHDRAW_MULTIPLES))
     if isinstance(msg, CallbackQuery):
         msg.answer()
         
@@ -112,13 +109,13 @@ async def withdraw_ask_amount(event: CallbackQuery, config: BotConfig, state: FS
     
     '''
     has_cached_amount!? why not just check if len(cached_withdraw_amounts) > 0?
-    since min_withdraw, max_withdraw, and withdraw_multiple are gathered from the API response,
+    since min_withdraw, and withdraw_multiple are gathered from the API response,
     so it's possible that the cached_withdraw_amounts value is not a valid amount.
     '''
     has_cached_amount = False
     # cached_withdraw_amounts.sort()
     for amount in cached_withdraw_amounts:
-        if is_valid_withdraw_amount(amount, user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW), user_model.action.get_action_data(ACTION_DATA_MAXIMUM_WITHDRAW), user_model.action.get_action_data(ACTION_DATA_WITHDRAW_MULTIPLES)):
+        if is_valid_withdraw_amount(amount, user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW), user_model.action.get_action_data(ACTION_DATA_WITHDRAW_MULTIPLES)):
             has_cached_amount = True
             builder.add(InlineKeyboardButton(text=f"Rp.{amount:,.0f}", callback_data=f"withdraw_amount_{amount}"))
     builder.adjust(6)
@@ -158,8 +155,8 @@ async def withdraw_input_amount(callback: CallbackQuery | Message, config: BotCo
         await user_model.save_to_state()
         return
     
-    if amount is None or amount < user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW) or amount > user_model.action.get_action_data(ACTION_DATA_MAXIMUM_WITHDRAW):
-        error_message = f"Jumlah withdraw tidak valid, minimal Rp.{user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW):,.0f} dan maksimal Rp.{user_model.action.get_action_data(ACTION_DATA_MAXIMUM_WITHDRAW):,.0f}"
+    if amount is None or amount < user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW):
+        error_message = f"Jumlah withdraw tidak valid, minimal Rp.{user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW):,.0f}"
         if isinstance(callback, CallbackQuery):
             user_model.add_action_message_id((await callback.message.answer(error_message, reply_markup=None)).message_id)
             await user_model.save_to_state()
