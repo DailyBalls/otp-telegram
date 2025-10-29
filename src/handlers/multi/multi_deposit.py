@@ -132,8 +132,8 @@ async def deposit_init(event: Message | CallbackQuery, config: BotConfig, state:
         va_payment_gateway.append(PaymentGateway(**payment_gateway))
 
     user_model.initiate_action(ACTION_DEPOSIT)
-    user_model.action.set_action_data(ACTION_DATA_MINIMUM_DEPOSIT, int(response.data.get("min_deposit", 10000)))
-    user_model.action.set_action_data(ACTION_DATA_MAXIMUM_DEPOSIT, int(response.data.get("max_deposit", 1000000)))
+    user_model.action.set_action_data(ACTION_DATA_MINIMUM_DEPOSIT, int(response.data.get("min_deposit")))
+    user_model.action.set_action_data(ACTION_DATA_MAXIMUM_DEPOSIT, int(response.data.get("max_deposit")))
     user_model.action.set_action_data(ACTION_DATA_USER_BANKS, user_banks)
     user_model.action.set_action_data(ACTION_DATA_DEPOSIT_BANKS, deposit_banks)
     user_model.action.set_action_data(ACTION_DATA_QRIS_PAYMENT_GATEWAY, qris_payment_gateway)
@@ -185,12 +185,12 @@ async def deposit_ask_method(event: CallbackQuery | Message, config: BotConfig, 
         await bot.edit_message_text(chat_id=chat_id, message_id=method_message_id, text=message, reply_markup=builder.as_markup())
     else:
         if isinstance(event, CallbackQuery):
+            await event.answer()
             method_message_id = (await event.message.answer(message, reply_markup=builder.as_markup())).message_id
         elif isinstance(event, Message):
             method_message_id = (await event.answer(message, reply_markup=builder.as_markup())).message_id
         user_model.add_action_message_id(method_message_id)
         user_model.action.set_action_data(MESSAGE_MENU_DEPOSIT_METHOD, method_message_id)
-    await event.answer()
     await state.set_state(LoggedInStates.deposit_ask_method)
     await user_model.save_to_state()
     return

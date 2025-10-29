@@ -75,8 +75,8 @@ async def withdraw_init(msg: Message | CallbackQuery, config: BotConfig, state: 
     rekening_wd_account_number = rekening_wd.get("rekening", "")
     rekening_wd_bank = rekening_wd.get("bank", "")
 
-    user_model.action.set_action_data(ACTION_DATA_MINIMUM_WITHDRAW, response.data.get("min_amount", 10000))
-    user_model.action.set_action_data(ACTION_DATA_WITHDRAW_MULTIPLES, response.data.get("withdraw_multiple", 1000))
+    user_model.action.set_action_data(ACTION_DATA_MINIMUM_WITHDRAW, response.data.get("min_withdraw"))
+    user_model.action.set_action_data(ACTION_DATA_WITHDRAW_MULTIPLES, response.data.get("withdrawal_multiples"))
     user_model.action.set_action_data(ACTION_DATA_WITHDRAW_DESTINATION, f"[{rekening_wd_bank}] {rekening_wd_account_number} - {rekening_wd_name}")
     
     ketentuan_withdraw = KETENTUAN_WITHDRAW.format(MINIMAL_WITHDRAW=user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW), WITHDRAW_MULTIPLES=user_model.action.get_action_data(ACTION_DATA_WITHDRAW_MULTIPLES))
