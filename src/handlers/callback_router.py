@@ -6,7 +6,7 @@ from aiogram.types.callback_query import CallbackQuery
 
 from handlers.callbacks.callback_action import callback_action_cancel, callback_action_reply_callback, callback_action_close_with_answer
 from handlers.callbacks.callback_deposit import callback_deposit_ask_payment_method, callback_deposit_confirm_channel, callback_deposit_init, callback_deposit_ask_channel, callback_deposit_confirm_yes, callback_deposit_cancel
-from handlers.callbacks.callback_game import callback_game_generate_launch, callback_game_list, callback_game_search_init, callback_game_search_navigation
+from handlers.callbacks.callback_game import callback_game_generate_launch, callback_game_search_init, callback_game_search_navigation
 from handlers.callbacks.callback_register import callback_register_bank, callback_register_edit, callback_auth_clear, callback_register_confirm_yes
 from handlers.callbacks.callback_rekening import callback_rekening_add, callback_rekening_list, callback_rekening_add_bank, callback_rekening_add_cancel, callback_rekening_add_confirm
 from handlers.middlewares.register_middleware import RegisterSessionMiddleware
@@ -14,7 +14,7 @@ from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddl
 from handlers.middlewares.verify_private_chat import VerifyPrivateChatMiddleware
 from utils.filters import Text, TextPrefix
 from handlers.middlewares.verify_contact import VerifyContactMiddleware
-from handlers.multi import multi_authentication, multi_menu, multi_withdraw, multi_deposit
+from handlers.multi import multi_authentication, multi_game, multi_menu, multi_withdraw, multi_deposit
 
 
 callback_router = Router()
@@ -71,11 +71,11 @@ logged_in_router.callback_query.register(multi_withdraw.withdraw_cancel, Text(da
 logged_in_router.callback_query.register(callback_action_cancel, Text(data="action_cancel"))
 
 # Games callbacks
-logged_in_router.callback_query.register(callback_game_list, TextPrefix(prefix="games_list_"))
+logged_in_router.callback_query.register(multi_game.game_list, TextPrefix(prefix="game_list_"))
 logged_in_router.callback_query.register(callback_game_generate_launch, TextPrefix(prefix="game_launch_"))
 logged_in_router.callback_query.register(callback_game_search_init, Text(data="game_search_init"))
 logged_in_router.callback_query.register(callback_game_search_navigation, TextPrefix(prefix="game_search_"))
-
+logged_in_router.callback_query.register(multi_game.game_provider_list, TextPrefix(prefix="game_provider_list_"))
 # Rekening callbacks
 logged_in_router.callback_query.register(callback_rekening_list, Text(data="rekening_list"))
 logged_in_router.callback_query.register(callback_rekening_add, Text(data="rekening_add"))

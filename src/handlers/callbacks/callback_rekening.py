@@ -25,8 +25,8 @@ async def callback_rekening_list(callback: CallbackQuery, config: BotConfig, sta
     
     builder = InlineKeyboardBuilder()
     if user_model.is_active():
-        builder.add(InlineKeyboardButton(text="Tambahkan Rekening", callback_data=f"rekening_add"))
-    builder.add(InlineKeyboardButton(text="Tutup", callback_data="action_close_with_answer_"))
+        builder.add(InlineKeyboardButton(text="➕ Tambahkan Rekening", callback_data=f"rekening_add"))
+    builder.add(InlineKeyboardButton(text="↩️ Tutup", callback_data="action_close_with_answer_"))
     builder.adjust(2)
     
     reply_message = f"""
