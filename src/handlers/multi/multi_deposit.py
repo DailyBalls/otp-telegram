@@ -322,6 +322,7 @@ async def deposit_channel(event: CallbackQuery, config: BotConfig, state: FSMCon
         await event.message.edit_text(text=f"Terpilih payment gateway: <b>{payment_gateway['type']} - {payment_gateway['name']}</b>", reply_markup=None)
         user_model.action.set_action_data(ACTION_SUBMITTED_DEPOSIT_METHOD, "QRIS")
         user_model.action.set_action_data(ACTION_SUBMITTED_DEPOSIT_CHANNEL_ID, channel_id)
+        user_model.action.set_action_data(ACTION_DATA_MAXIMUM_DEPOSIT, 10000000) # 10jt
         await user_model.save_to_state()
         return await deposit_ask_amount(event, config, state, user_model, chat_id)
     elif method == "VA":
@@ -332,6 +333,7 @@ async def deposit_channel(event: CallbackQuery, config: BotConfig, state: FSMCon
         await event.message.edit_text(text=f"Terpilih payment gateway: <b>{virtual_account_payment_gateway['code']} {virtual_account_payment_gateway['type']} - {virtual_account_payment_gateway['name']}</b>", reply_markup=None)
         user_model.action.set_action_data(ACTION_SUBMITTED_DEPOSIT_METHOD, "VA")
         user_model.action.set_action_data(ACTION_SUBMITTED_DEPOSIT_CHANNEL_ID, channel_id)
+        user_model.action.set_action_data(ACTION_DATA_MAXIMUM_DEPOSIT, 30000000) # 30jt
         await user_model.save_to_state()
         return await deposit_ask_amount(event, config, state, user_model, chat_id)
     return
