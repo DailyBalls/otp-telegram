@@ -227,11 +227,12 @@ async def withdraw_confirm_yes(callback: CallbackQuery, config: BotConfig, state
     telegram_data.set_persistent_data(KEY_CACHED_WITHDRAW_AMOUNTS, cached_withdraw_amounts)
     await telegram_data.save_to_state()
     # await callback.message.edit_text("Withdraw berhasil, Silahkan tunggu proses withdraw selesai", reply_markup=None)
-    await bot.send_message(chat_id, f"""<b>Withdraw berhasil</b>
+    text_withdraw_success = f"""<b>Withdraw berhasil</b>
 
 Bank Penerima: <b>{user_model.action.get_action_data(ACTION_DATA_WITHDRAW_DESTINATION)}</b>
 Jumlah Withdraw: <b>Rp.{user_model.action.get_action_data(ACTION_DATA_WITHDRAW_AMOUNT):,.0f}</b>
-Silahkan tunggu proses withdraw selesai""", reply_markup=None)
+Silahkan tunggu proses withdraw selesai"""
+    user_model.add_message_id((await callback.message.answer(text_withdraw_success)).message_id)
     await callback.answer("Withdraw Berhasil")
     user_model.finish_action()
     await state.set_state(LoggedInStates.main_menu)
