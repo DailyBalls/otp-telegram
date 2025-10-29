@@ -258,6 +258,12 @@ class OTPAPIClient:
             'type': type
         }
         return await self._make_request("POST", "/api/v1/telegram/me/deposit/confirm/payment-gateway", data)
+
+    @authenticated
+    async def show_deposit_withdraw_history(self, page: int = 1) -> APIResponse:
+        """GET request to /api/v1/telegram/me/transaction/deposit-withdraw"""
+        return await self._make_request("GET", f"/api/v1/telegram/me/transaction/deposit-withdraw?page={page}")
+
     async def list_games_by_type(self, game_type = "all", page: int = 1) -> APIResponse:
         """GET request to /api/v1/telegram/game/{game_type}?page={page}"""
         return await self._make_request("GET", f"/api/v1/telegram/game/{game_type}?page={page}")
