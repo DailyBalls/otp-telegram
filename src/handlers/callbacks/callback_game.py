@@ -100,7 +100,7 @@ async def callback_game_generate_launch(callback: types.CallbackQuery, config: B
     game_code, provider_id = game_launch_string.split("|")
     api_response = await api_client.get_game_url(game_code, provider_id)
     if api_response.is_error:
-        await callback.answer("Gagal memuat game")
+        await callback.answer(f"Gagal memuat game: {api_response.get_error_message()}")
         return
     # print(api_response.data)
     game_name = api_response.data['game_name']

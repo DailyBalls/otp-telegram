@@ -10,6 +10,9 @@ from contextlib import suppress
 from models.model_deposit import DepositChannel
 from .base_state_model import BaseStateModel
 
+STATUS_SUSPEND = "2"
+STATUS_ACTIVE = "1"
+STATUS_INACTIVE = "0"
 
 class RekeningAdd(BaseModel):
     initiator_message_id: Optional[int] = None
@@ -101,6 +104,7 @@ class ModelUser(BaseStateModel):
     action: Optional[UserAction] = None
     pending_wd: Optional[bool] = False
     pending_deposit: Optional[bool] = False
+    status: Optional[str] = STATUS_ACTIVE
     
     def _get_state_key(self) -> str:
         """Override to use 'user' as the state key"""
@@ -188,3 +192,9 @@ class ModelUser(BaseStateModel):
         self.action._add_message_id(menu_id)
         self.list_messages_ids.append(menu_id)
         self._auto_save_if_enabled()
+
+    def is_active(self) -> bool:
+        return self.status == STATUS_ACTIVE
+
+    def get_status_text(self) -> str:
+        return "Suspend" if self.status == STATUS_SUSPEND else "Nonaktif"
