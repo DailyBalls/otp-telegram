@@ -73,7 +73,7 @@ async def logged_in_menu(msg: Message, config: BotConfig, state: FSMContext, use
             builder.add(InlineKeyboardButton(text="🚧𝚆̶𝚒̶𝚝̶𝚑̶𝚍̶𝚛̶𝚊̶𝚠̶", callback_data="withdraw_init"))
     builder.add(InlineKeyboardButton(text="💳Rekening", callback_data="rekening_list"))
     builder.add(InlineKeyboardButton(text="↩️Logout", callback_data="logout"))
-    builder.add(InlineKeyboardButton(text="💬 Hubungi Kami", callback_data="menu_social_media"))
+    builder.add(InlineKeyboardButton(text="💬Hubungi Kami", callback_data="menu_social_media"))
     builder.adjust(2)
 
     play_menu_builder = InlineKeyboardBuilder()
