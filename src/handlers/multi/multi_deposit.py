@@ -153,12 +153,15 @@ async def deposit_init(event: Message | CallbackQuery, config: BotConfig, state:
 Deposit Ask Method Function
 
 Entrypoint:
-- Init Function (deposit_init)
+- Init Function (deposit_init) (CallbackQuery | Message)
 '''
-async def deposit_ask_method(event: CallbackQuery, config: BotConfig, state: FSMContext, user_model: ModelUser, chat_id: int) -> None:
+async def deposit_ask_method(event: CallbackQuery | Message, config: BotConfig, state: FSMContext, user_model: ModelUser, chat_id: int) -> None:
     if user_model.action is None or user_model.action.current_action != ACTION_DEPOSIT:
-        await event.message.edit_text("Aksi tidak valid, silahkan ulangi proses deposit", reply_markup=None)
-        await event.answer()
+        if isinstance(event, CallbackQuery):
+            await event.message.answer("Aksi tidak valid, silahkan ulangi proses deposit", reply_markup=None)
+            await event.answer()
+        elif isinstance(event, Message):
+            await event.answer("Aksi tidak valid, silahkan ulangi proses deposit")
         return
 
     builder = InlineKeyboardBuilder()
@@ -181,8 +184,10 @@ async def deposit_ask_method(event: CallbackQuery, config: BotConfig, state: FSM
     if method_message_id is not None:
         await bot.edit_message_text(chat_id=chat_id, message_id=method_message_id, text=message, reply_markup=builder.as_markup())
     else:
-        method_message_id = (await event.message.answer(message, reply_markup=builder.as_markup())).message_id
-        print("Method Message ID (NEW): ", method_message_id)
+        if isinstance(event, CallbackQuery):
+            method_message_id = (await event.message.answer(message, reply_markup=builder.as_markup())).message_id
+        elif isinstance(event, Message):
+            method_message_id = (await event.answer(message, reply_markup=builder.as_markup())).message_id
         user_model.add_action_message_id(method_message_id)
         user_model.action.set_action_data(MESSAGE_MENU_DEPOSIT_METHOD, method_message_id)
     await event.answer()
