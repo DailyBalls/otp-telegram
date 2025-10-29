@@ -105,6 +105,7 @@ class ModelUser(BaseStateModel):
     pending_wd: Optional[bool] = False
     pending_deposit: Optional[bool] = False
     status: Optional[str] = STATUS_ACTIVE
+    show_rank: Optional[bool] = True
     
     def _get_state_key(self) -> str:
         """Override to use 'user' as the state key"""

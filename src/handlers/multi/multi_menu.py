@@ -97,6 +97,9 @@ async def logged_in_menu(msg: Message, config: BotConfig, state: FSMContext, use
     builder.attach(play_menu_builder)
 
     placeholder_text = ""
+    if user_model.show_rank:
+        placeholder_text += f"Rank: <b>{user_model.rank}</b>"
+
     if not user_model.is_active():
         placeholder_text = f"\n ⚠️ <b>Akun Anda dalam status <i>{user_model.get_status_text()}</i></b> ⚠️\n Anda tidak dapat melakukan deposit, withdraw, atau bermain game. Silahkan hubungi admin untuk aktivasi akun\n"
 
@@ -104,7 +107,6 @@ async def logged_in_menu(msg: Message, config: BotConfig, state: FSMContext, use
 Selamat datang di <b>{config.site_name}</b>!
 Halo <b>{user_model.username}</b>!
 Credit: <b>Rp {float(user_model.credit):,.0f}</b>
-Rank: <b>{user_model.rank}</b>
 {placeholder_text}
 Silahkan pilih menu yang tersedia
 """, reply_markup=builder.as_markup())).message_id
