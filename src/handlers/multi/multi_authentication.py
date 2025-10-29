@@ -269,6 +269,7 @@ async def register_init(callback: CallbackQuery | Message, config: BotConfig, st
     chat_id: int | None = None
     message_id: int | None = None
     if isinstance(callback, CallbackQuery):
+        callback.answer("Memulai proses register...")
         chat_id = callback.message.chat.id
         message_id = callback.message.message_id
     elif isinstance(callback, Message):
