@@ -139,6 +139,10 @@ class OTPAPIClient:
         """GET request to /api/v1/telegram/server/info"""
         return await self._make_request("GET", "/api/v1/telegram/server/info")
 
+    async def get_social_media(self) -> APIResponse:
+        """GET request to /api/v1/telegram/server/social-media"""
+        return await self._make_request("GET", "/api/v1/telegram/server/social-media")
+
     async def logout(self) -> APIResponse:
         """POST request to /api/v1/telegram/logout"""
         return await self._make_request("POST", "/api/v1/telegram/logout")

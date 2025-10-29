@@ -14,7 +14,7 @@ from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddl
 from handlers.middlewares.verify_private_chat import VerifyPrivateChatMiddleware
 from utils.filters import Text, TextPrefix
 from handlers.middlewares.verify_contact import VerifyContactMiddleware
-from handlers.multi import multi_authentication, multi_withdraw, multi_deposit
+from handlers.multi import multi_authentication, multi_menu, multi_withdraw, multi_deposit
 
 
 callback_router = Router()
@@ -36,6 +36,10 @@ callback_router.include_router(register_router)
 
 logged_in_router = Router()
 logged_in_router.callback_query.middleware(AuthenticatedSessionMiddleware())
+
+# Menu callbacks
+logged_in_router.callback_query.register(multi_menu.social_media_menu, Text(data="menu_social_media"))
+
 # Deposit callbacks
 logged_in_router.callback_query.register(multi_deposit.deposit_init, Text(data="deposit_init"))
 logged_in_router.callback_query.register(multi_deposit.deposit_ask_method, Text(data="deposit_ask_method"))

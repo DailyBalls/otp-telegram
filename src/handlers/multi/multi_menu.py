@@ -1,12 +1,40 @@
 from aiogram.types import InlineKeyboardButton, Message
 from aiogram.fsm.context import FSMContext
 from aiogram.types.callback_query import CallbackQuery
+from aiogram.types.copy_text_button import CopyTextButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from bot_instance import LoggedInStates, bot
 from config import BotConfig
 from models.model_menu import ModelMenu
 from models.model_user import ModelUser
+from services.otp_services.api_client import OTPAPIClient
 import utils.models as model_utils
+
+'''
+Social Media Menu
+
+Entrypoint:
+- Callback Router (data: menu_social_media)
+'''
+async def social_media_menu(event: Message | CallbackQuery, config: BotConfig, state: FSMContext, user_model: ModelUser | None = None) -> None:
+    api_client = OTPAPIClient(state=state, user_id=event.from_user.id, base_url=config.otp_host)
+    response = await api_client.get_social_media()
+    if response.is_error:
+        await bot.send_message(event.chat.id, f"Gagal memuat menu social media")
+        return
+    
+    builder = InlineKeyboardBuilder()
+    for social_media in response.data:
+        if social_media["type"] == "phone" or social_media["type"] == "email":
+            builder.add(InlineKeyboardButton(text=social_media['value'], copy_text=CopyTextButton(text=social_media['value'])))
+        else:
+            builder.add(InlineKeyboardButton(text=social_media['name'], url=social_media['url']))
+    builder.add(InlineKeyboardButton(text="↩️ Tutup", callback_data="action_close_with_answer_"))
+    builder.adjust(2)
+    message_id = (await event.message.answer(f"Silahkan hubungi kami melalui salah satu media sosial berikut", reply_markup=builder.as_markup())).message_id
+    if user_model is not None:
+        user_model.add_message_id(message_id)
+        await user_model.save_to_state()
 
 '''
 Multi Menu Main Function
@@ -45,6 +73,7 @@ async def logged_in_menu(msg: Message, config: BotConfig, state: FSMContext, use
             builder.add(InlineKeyboardButton(text="🚧𝚆̶𝚒̶𝚝̶𝚑̶𝚍̶𝚛̶𝚊̶𝚠̶", callback_data="withdraw_init"))
     builder.add(InlineKeyboardButton(text="💳Rekening", callback_data="rekening_list"))
     builder.add(InlineKeyboardButton(text="↩️Logout", callback_data="logout"))
+    builder.add(InlineKeyboardButton(text="💬 Hubungi Kami", callback_data="menu_social_media"))
     builder.adjust(2)
 
     play_menu_builder = InlineKeyboardBuilder()
@@ -69,16 +98,15 @@ async def logged_in_menu(msg: Message, config: BotConfig, state: FSMContext, use
 
     placeholder_text = ""
     if not user_model.is_active():
-        placeholder_text = f"\n ⚠️ <b>Akun Anda dalam status <i>{user_model.get_status_text()}</i></b> ⚠️\n Anda tidak dapat melakukan deposit, withdraw, atau bermain game. Silahkan hubungi admin untuk aktivasi akun"
+        placeholder_text = f"\n ⚠️ <b>Akun Anda dalam status <i>{user_model.get_status_text()}</i></b> ⚠️\n Anda tidak dapat melakukan deposit, withdraw, atau bermain game. Silahkan hubungi admin untuk aktivasi akun\n"
 
     menu_id = (await msg.answer(f"""
 Selamat datang di <b>{config.site_name}</b>!
 Halo <b>{user_model.username}</b>!
 Credit: <b>Rp {float(user_model.credit):,.0f}</b>
 Rank: <b>{user_model.rank}</b>
-
-Silahkan pilih menu yang tersedia
 {placeholder_text}
+Silahkan pilih menu yang tersedia
 """, reply_markup=builder.as_markup())).message_id
 
     menu_model.add_menu_id(menu_id)
