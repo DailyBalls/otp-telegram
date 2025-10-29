@@ -24,6 +24,15 @@ def get_guest_menu_builder() -> ReplyKeyboardBuilder:
     builder.adjust(2)  # One button per row
     return builder
 
+def get_logged_in_menu_builder() -> ReplyKeyboardBuilder:
+    builder = ReplyKeyboardBuilder()
+    builder.add(KeyboardButton(text="Menu"))
+    builder.add(KeyboardButton(text="Deposit"))
+    builder.add(KeyboardButton(text="Withdraw"))
+    builder.add(KeyboardButton(text="Logout"))
+    builder.adjust(2)
+    return builder
+
 '''
 Login Init Function
 
@@ -220,14 +229,7 @@ async def login_submit(callback: Message, config: BotConfig, state: FSMContext, 
     )
     await user_model.save_to_state()
     await state.set_state(LoggedInStates.main_menu)
-    reply_keyboard = ReplyKeyboardBuilder()
-    reply_keyboard.add(KeyboardButton(text="Menu"))
-    reply_keyboard.add(KeyboardButton(text="Deposit"))
-    reply_keyboard.add(KeyboardButton(text="Withdraw"))
-    reply_keyboard.add(KeyboardButton(text="Logout"))
-
-    reply_keyboard.adjust(2)
-    user_model.add_message_id((await callback.answer("Login berhasil", reply_markup=reply_keyboard.as_markup(resize_keyboard=True))).message_id)
+    user_model.add_message_id((await callback.answer("Login berhasil", reply_markup=get_logged_in_menu_builder().as_markup(resize_keyboard=True))).message_id)
 
     await callback_auth_clear(config, state)
 

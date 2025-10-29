@@ -7,6 +7,7 @@ from config import BotConfig
 from handlers.callbacks.callback_auth import callback_auth_clear
 from handlers.messages.msg_register import send_confirmation_register_message
 from handlers.multi import multi_menu
+from handlers.multi.multi_authentication import get_logged_in_menu_builder
 from keyboards.inline import keyboard_guest
 from models.model_register import ModelRegister
 from models.model_telegram_data import ModelTelegramData
@@ -94,7 +95,7 @@ async def callback_register_confirm_yes(callback: types.CallbackQuery, config: B
         is_authenticated=True,
     )
     await user_model.save_to_state()
-    user_model.add_message_id((await callback.message.answer("Berhasil melakukan registrasi")).message_id)
+    user_model.add_message_id((await callback.message.answer("Berhasil melakukan registrasi", reply_markup=get_logged_in_menu_builder().as_markup(resize_keyboard=True))).message_id)
     await callback.answer("Registrasi berhasil")
     await callback_auth_clear(config, state)
 
