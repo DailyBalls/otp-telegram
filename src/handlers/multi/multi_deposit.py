@@ -429,7 +429,10 @@ Frequency     : <b>{promo['frequency']}</b>
 Amount          : <b>{promo['amount']}</b>
 
 """
-            builder.add(InlineKeyboardButton(text=f"{promo['name']}", callback_data=f"deposit_confirm_promo_{promo['id']}"))
+            if promo['id'] == 0:
+                builder.add(InlineKeyboardButton(text=f"{promo['name']}", callback_data=f"deposit_choose_promo_{promo['id']}"))
+            else:
+                builder.add(InlineKeyboardButton(text=f"{promo['name']}", callback_data=f"deposit_confirm_promo_{promo['id']}"))
     builder.adjust(1)
 
     navigation_builder = InlineKeyboardBuilder()
@@ -451,7 +454,7 @@ Amount          : <b>{promo['amount']}</b>
 Deposit Confirm Promo Function
 
 Entrypoint:
-- Deposit Choose Promo Function (deposit_choose_promo)
+- Callback Button (data: deposit_confirm_promo_{promo_id})
 '''
 async def deposit_confirm_promo(event: CallbackQuery, config: BotConfig, state: FSMContext, user_model: ModelUser, chat_id: int) -> None:
     if user_model.action is None or user_model.action.current_action != ACTION_DEPOSIT:
@@ -544,9 +547,11 @@ async def deposit_ask_amount(event: CallbackQuery, config: BotConfig, state: FSM
     if cached_deposit_amounts is None:
         cached_deposit_amounts = []
     
+    maximum_deposit = int(user_model.action.get_action_data(ACTION_DATA_MAXIMUM_DEPOSIT))
     minimum_deposit = int(user_model.action.get_action_data(ACTION_DATA_MINIMUM_DEPOSIT))
     maximum_deposit = int(user_model.action.get_action_data(ACTION_DATA_MAXIMUM_DEPOSIT))
-    message = "Silahkan masukkan jumlah Deposit"
+    
+    message = f"Silahkan masukkan jumlah Deposit\nMinimal Deposit: <b>Rp.{minimum_deposit:,.0f}</b>\nMaksimal Deposit: <b>Rp.{maximum_deposit:,.0f}</b>"
     await state.set_state(LoggedInStates.deposit_ask_amount)
     builder = InlineKeyboardBuilder()
     builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="deposit_cancel"))
@@ -592,6 +597,10 @@ async def deposit_submit_amount(event: CallbackQuery | Message, config: BotConfi
 
     if deposit_method == "VA":
         minimum_deposit = 500000 #Hardcoded minimum deposit for VA
+        maximum_deposit = 30000000 # Hardcoded maximum deposit for VA (30jt)
+
+    if deposit_method == "QRIS":
+        maximum_deposit = 10000000 # Hardcoded maximum deposit for QRIS (10jt)
     
     if amount is None or amount < minimum_deposit or amount > maximum_deposit:
         error_message = f"Jumlah deposit tidak valid, minimal Rp.{minimum_deposit:,.0f} dan maksimal Rp.{maximum_deposit:,.0f}"
