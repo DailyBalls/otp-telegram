@@ -840,7 +840,7 @@ async def deposit_confirm_submit(event: CallbackQuery, config: BotConfig, state:
             await event.message.answer(f"Payment gateway tidak ditemukan", reply_markup=builder.as_markup())
             return
         message += f"<b>Payment Gateway:</b> <code>{payment_gateway['name']}</code>\n"
-        response = await api_client.confirm_deposit_payment_gateway(payment_gateway_id=payment_gateway['name'], amount=amount, type=deposit_method)
+        response = await api_client.confirm_deposit_payment_gateway(payment_gateway_id=payment_gateway['name'], amount=amount, type=payment_gateway['code'])
         if response.is_error:
             user_model.add_action_message_id((await event.message.answer(f"Gagal mengkonfirmasi deposit: {response.get_error_message()}", reply_markup=builder.as_markup())).message_id)
             if response.has_validation_errors:

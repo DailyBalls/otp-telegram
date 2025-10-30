@@ -248,10 +248,6 @@ class OTPAPIClient:
     @authenticated
     async def confirm_deposit_payment_gateway(self, payment_gateway_id: int, amount: int, type: str):
         """POST request to /api/v1/telegram/me/deposit/confirm/payment-gateway"""
-        if type.lower() == "qris":
-            type = "qr"
-        elif type.lower() == "va":
-            type = "va"
         data = {
             'gateway': payment_gateway_id,
             'jumlahpgw': amount,
