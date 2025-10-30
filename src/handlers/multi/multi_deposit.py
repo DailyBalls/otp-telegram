@@ -808,6 +808,9 @@ async def deposit_confirm_submit(event: CallbackQuery, config: BotConfig, state:
     builder.add(InlineKeyboardButton(text="❌ Batalkan Deposit", callback_data="deposit_cancel"))
     builder.add(InlineKeyboardButton(text="✅ Coba Lagi", callback_data=f"deposit_confirm_submit_retry"))
     builder.adjust(2)
+    transaksi_builder = InlineKeyboardBuilder()
+    transaksi_builder.add(InlineKeyboardButton(text="📊 Riwayat Transaksi", callback_data="transaction_history"))
+    transaksi_builder.adjust(1)
     if deposit_method == "BANK":
         response = await api_client.confirm_deposit_bank(user_bank_id=user_bank_id, deposit_bank_id=channel_id, promo_id=promo_id, amount=amount, notes=notes)
         if response.is_error:
@@ -856,17 +859,19 @@ async def deposit_confirm_submit(event: CallbackQuery, config: BotConfig, state:
             message += f"Silahkan melakukan pembayaran dengan scan QRIS berikut:"
         elif deposit_method == "VA":
             message += f"Silahkan melakukan transfer ke Virtual Account berikut: <code>{response.data.get('payment')}</code>"
-    user_model.add_message_id((await event.message.answer(message)).message_id)
     if deposit_method == "QRIS": 
+        user_model.add_message_id((await event.message.answer(message)).message_id)
         if payment_gateway['name'] == "SIPAY" or payment_gateway['name'] == "TOPAY":
             if response.data.get('payment') is None:
                 user_model.add_action_message_id((await event.message.answer("Gagal mengkonfirmasi deposit: Kode Pembayaran tidak ditemukan")).message_id)
                 return
             decoded_image_bytes = base64.b64decode(response.data.get('payment').replace("data:image/png;base64,", ""))
             image_buffer = BytesIO(decoded_image_bytes)
-            user_model.add_message_id((await event.message.answer_photo(photo=BufferedInputFile(image_buffer.getvalue(), filename="payment.png"))).message_id)
+            user_model.add_message_id((await event.message.answer_photo(photo=BufferedInputFile(image_buffer.getvalue(), filename="payment.png"), reply_markup=transaksi_builder.as_markup())).message_id)
         else:
-            user_model.add_message_id((await event.message.answer_photo(photo=response.data.get('payment'))).message_id)
+            user_model.add_message_id((await event.message.answer_photo(photo=response.data.get('payment'), reply_markup=transaksi_builder.as_markup())).message_id)
+    else:
+        user_model.add_message_id((await event.message.answer(message, reply_markup=transaksi_builder.as_markup())).message_id)
     await user_model.await_finish_action()
     await user_model.save_to_state()
     await state.set_state(LoggedInStates.main_menu)
