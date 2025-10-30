@@ -699,6 +699,7 @@ Ask Deposit Confirmation Function
 
 Entrypoint:
 - Deposit Ask Note Function (deposit_ask_note)
+- Deposit Submit Amount Function (deposit_submit_amount)
 '''
 async def deposit_confirm(event: CallbackQuery | Message, config: BotConfig, state: FSMContext, user_model: ModelUser, chat_id: int) -> None:
     # if user_model.action is None or user_model.action.current_action != ACTION_DEPOSIT:
@@ -857,7 +858,7 @@ async def deposit_confirm_submit(event: CallbackQuery, config: BotConfig, state:
             message += f"Silahkan melakukan transfer ke Virtual Account berikut: <code>{response.data.get('payment')}</code>"
     user_model.add_message_id((await event.message.answer(message)).message_id)
     if deposit_method == "QRIS": 
-        if payment_gateway['name'] == "SIPAY":
+        if payment_gateway['name'] == "SIPAY" or payment_gateway['name'] == "TOPAY":
             if response.data.get('payment') is None:
                 user_model.add_action_message_id((await event.message.answer("Gagal mengkonfirmasi deposit: Kode Pembayaran tidak ditemukan")).message_id)
                 return
