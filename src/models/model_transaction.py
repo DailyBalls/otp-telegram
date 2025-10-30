@@ -4,6 +4,7 @@ from pydantic import BaseModel
 REPORT_TYPE_PROGRESS = "PROGRESS"
 REPORT_TYPE_REJECTED = "REJECTED"
 REPORT_TYPE_SUCCESS  = "SUCCESS"
+REPORT_TYPE_APPROVED = "APPROVED"
 class ModelTransaction(BaseModel):
     id: Optional[int] = None
     description: Optional[str] = None
@@ -27,4 +28,5 @@ class ModelTransaction(BaseModel):
         if self.report == REPORT_TYPE_PROGRESS: return "🕒"
         elif self.report == REPORT_TYPE_REJECTED: return "❌"
         elif self.report == REPORT_TYPE_SUCCESS: return "✅"
+        elif self.report == REPORT_TYPE_APPROVED: return "✅"
         else: return "❓"
