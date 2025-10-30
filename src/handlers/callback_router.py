@@ -40,6 +40,7 @@ logged_in_router.callback_query.middleware(AuthenticatedSessionMiddleware())
 # Menu callbacks
 logged_in_router.callback_query.register(multi_menu.social_media_menu, Text(data="menu_social_media"))
 logged_in_router.callback_query.register(multi_transaction.transaction_history, Text(data="transaction_history"))
+logged_in_router.callback_query.register(multi_transaction.transaction_history, Text(data="transaction_history_refresh"))
 
 # Deposit callbacks
 logged_in_router.callback_query.register(multi_deposit.deposit_init, Text(data="deposit_init"))
