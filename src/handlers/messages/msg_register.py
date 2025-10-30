@@ -87,7 +87,7 @@ async def msg_register_4_bank_account_name(msg: types.Message, config: BotConfig
     if not msg.text or not validators.alpha_space(msg.text):
         register_model.add_message_id((await msg.answer("Nama rekening hanya boleh berisi huruf dan spasi. Silakan kirimkan nama rekening yang valid.")).message_id)
         return
-    if not validators.min_length(msg.text, 5):
+    if not validators.min_length(msg.text, 3):
         register_model.add_message_id((await msg.answer("Nama rekening harus minimal 5 karakter")).message_id)
         return
 
