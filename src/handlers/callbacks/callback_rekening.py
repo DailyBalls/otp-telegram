@@ -65,7 +65,7 @@ async def callback_rekening_add(callback: CallbackQuery, config: BotConfig, stat
         list_active_banks=api_initiate_rekening_add.data.get("bankList", []),
         list_user_banks=api_initiate_rekening_add.data.get("userBankList", []),
         bank_name=None,
-        bank_account_name=None,
+        bank_account_name=user_model.name,
         bank_account_number=None,
         list_messages_ids=[],
     )
@@ -89,8 +89,7 @@ async def callback_rekening_add_bank(callback: CallbackQuery, config: BotConfig,
     if user_model.temp_rekening_add.list_user_banks is not None and bank_name in user_model.temp_rekening_add.list_user_banks:
         await callback.answer(f"Bank {bank_name} sudah terdaftar sebagai rekening anda")
         return
-    
-    await state.set_state(LoggedInStates.rekening_add_2_ask_bank_account_name)
+
     user_model.temp_rekening_add.bank_name = bank_name
 
     await callback.message.edit_text(f"Bank <b>{bank_name}</b> berhasil dipilih", reply_markup=None)
@@ -98,7 +97,8 @@ async def callback_rekening_add_bank(callback: CallbackQuery, config: BotConfig,
     builder = InlineKeyboardBuilder()
     builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="rekening_add_cancel"))
     
-    user_model.add_rekening_message_id((await callback.message.answer("Silahkan kirimkan nama rekening", reply_markup=builder.as_markup())).message_id)
+    user_model.add_rekening_message_id((await callback.message.answer("Silahkan kirimkan nomor rekening", reply_markup=builder.as_markup())).message_id)
+    await state.set_state(LoggedInStates.rekening_add_3_ask_bank_account_number)
     await user_model.save_to_state()
     return
 

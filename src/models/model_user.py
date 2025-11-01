@@ -92,6 +92,7 @@ class UserAction(BaseModel):
 
 class ModelUser(BaseStateModel):
     username: Optional[str] = None
+    name: Optional[str] = None
     credit: Optional[str] = None
     rank: Optional[str] = None
     min_deposit: Optional[int] = None

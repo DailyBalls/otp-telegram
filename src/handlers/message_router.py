@@ -3,7 +3,7 @@ from aiogram import F
 
 from bot_instance import GuestStates, LoggedInStates
 from handlers.messages.msg_contact import msg_contact
-from handlers.messages.msg_rekening import msg_rekening_ask_bank_account_name, msg_rekening_ask_bank_account_number
+from handlers.messages.msg_rekening import msg_rekening_ask_bank_account_number
 from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddleware
 from handlers.middlewares.verify_contact import VerifyContactMiddleware
 from handlers.middlewares.register_middleware import RegisterSessionMiddleware
@@ -68,7 +68,7 @@ authenticated_router.message.register(multi_deposit.deposit_submit_note, LoggedI
 ## Action Message Handlers
 authenticated_router.message.register(multi_deposit.deposit_submit_amount, LoggedInStates.deposit_ask_amount)
 authenticated_router.message.register(msg_game_search, LoggedInStates.game_search)
-authenticated_router.message.register(msg_rekening_ask_bank_account_name, LoggedInStates.rekening_add_2_ask_bank_account_name)
+# authenticated_router.message.register(msg_rekening_ask_bank_account_name, LoggedInStates.rekening_add_2_ask_bank_account_name)
 authenticated_router.message.register(msg_rekening_ask_bank_account_number, LoggedInStates.rekening_add_3_ask_bank_account_number)
 authenticated_router.message.register(multi_withdraw.withdraw_input_amount, LoggedInStates.withdraw_ask_amount)
 message_router.include_router(authenticated_router)
