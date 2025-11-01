@@ -1,3 +1,4 @@
+from numbers import Number
 from aiogram.types import InlineKeyboardButton, Message
 from aiogram.fsm.context import FSMContext
 from aiogram.types.callback_query import CallbackQuery
@@ -16,6 +17,7 @@ ACTION_DATA_MINIMUM_WITHDRAW     = "minimum_withdraw"
 ACTION_DATA_WITHDRAW_MULTIPLES   = "withdraw_multiples"
 ACTION_DATA_WITHDRAW_AMOUNT      = "withdraw_amount"
 ACTION_DATA_WITHDRAW_DESTINATION = "withdraw_destination"
+ACTION_DATA_USER_CREDIT          = "user_credit"
 KEY_CACHED_WITHDRAW_AMOUNTS      = "cached_withdraw_amounts"
 
 KETENTUAN_WITHDRAW = """
@@ -74,10 +76,15 @@ async def withdraw_init(msg: Message | CallbackQuery, config: BotConfig, state: 
     rekening_wd_name = rekening_wd.get("name", "")
     rekening_wd_account_number = rekening_wd.get("rekening", "")
     rekening_wd_bank = rekening_wd.get("bank", "")
+    credit_str = response.data.get("credit", "0.0")
+    if isinstance(credit_str, str):
+        credit_str = credit_str.replace(",", "")
+    user_credit = round(float(credit_str), 2)
 
     user_model.action.set_action_data(ACTION_DATA_MINIMUM_WITHDRAW, response.data.get("min_withdraw"))
     user_model.action.set_action_data(ACTION_DATA_WITHDRAW_MULTIPLES, response.data.get("withdrawal_multiples"))
     user_model.action.set_action_data(ACTION_DATA_WITHDRAW_DESTINATION, f"[{rekening_wd_bank}] {rekening_wd_account_number} - {rekening_wd_name}")
+    user_model.action.set_action_data(ACTION_DATA_USER_CREDIT, user_credit)
     
     ketentuan_withdraw = KETENTUAN_WITHDRAW.format(MINIMAL_WITHDRAW=user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW), WITHDRAW_MULTIPLES=user_model.action.get_action_data(ACTION_DATA_WITHDRAW_MULTIPLES))
     if isinstance(msg, CallbackQuery):
@@ -119,7 +126,9 @@ async def withdraw_ask_amount(event: CallbackQuery, config: BotConfig, state: FS
             has_cached_amount = True
             builder.add(InlineKeyboardButton(text=f"Rp.{amount:,.0f}", callback_data=f"withdraw_amount_{amount}"))
     builder.adjust(6)
-    reply_text = "Silahkan ketik jumlah withdraw, contoh: 10000" if not has_cached_amount else "Silahkan pilih jumlah withdraw atau ketik jumlah withdraw, contoh: 10000"
+    reply_text = f"Saldo saat ini: <b>Rp.{user_model.action.get_action_data(ACTION_DATA_USER_CREDIT):,.0f}</b>\nSilahkan ketik jumlah withdraw, contoh: 10000" 
+    if has_cached_amount:
+        reply_text = f"Saldo saat ini: <b>Rp.{user_model.action.get_action_data(ACTION_DATA_USER_CREDIT):,.0f}</b>\nSilahkan pilih jumlah withdraw atau ketik jumlah withdraw, contoh: 10000"
     reply_message = await bot.send_message(chat_id, reply_text, reply_markup=builder.as_markup())
     user_model.add_action_message_id(reply_message.message_id)
     await state.set_state(LoggedInStates.withdraw_ask_amount)
@@ -143,6 +152,8 @@ async def withdraw_input_amount(callback: CallbackQuery | Message, config: BotCo
             await callback.answer("Silahkan ulangi proses withdraw dengan mengetik /withdraw")
             return
     
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="withdraw_cancel"))
     amount: int | None = None
     try:
         if isinstance(callback, CallbackQuery):
@@ -151,31 +162,44 @@ async def withdraw_input_amount(callback: CallbackQuery | Message, config: BotCo
             user_model.add_action_message_id(message_id)
             amount = int(callback.text)
     except ValueError:
-        user_model.add_action_message_id((await callback.answer("Jumlah withdraw harus berupa angka, contoh: 10000")).message_id)
+        user_model.add_action_message_id((await callback.answer("Jumlah withdraw harus berupa angka, contoh: 10000", reply_markup=builder.as_markup())).message_id)
         await user_model.save_to_state()
         return
     
     if amount is None or amount < user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW):
-        error_message = f"Jumlah withdraw tidak valid, minimal Rp.{user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW):,.0f}"
+        error_message = f"Jumlah withdraw tidak valid, minimal Rp.{user_model.action.get_action_data(ACTION_DATA_MINIMUM_WITHDRAW):,.0f}\nSilahkan masukkan jumlah withdraw yang lebih besar"
         if isinstance(callback, CallbackQuery):
-            user_model.add_action_message_id((await callback.message.answer(error_message, reply_markup=None)).message_id)
+            user_model.add_action_message_id((await callback.message.answer(error_message, reply_markup=builder.as_markup())).message_id)
             await user_model.save_to_state()
             await callback.answer()
             return
         else:
-            user_model.add_action_message_id((await callback.answer(error_message)).message_id)
+            user_model.add_action_message_id((await callback.answer(error_message, reply_markup=builder.as_markup())).message_id)
             await user_model.save_to_state()
             return
 
     if amount % user_model.action.get_action_data(ACTION_DATA_WITHDRAW_MULTIPLES) != 0:
-        error_message = f"Jumlah withdraw harus kelipatan Rp.{user_model.action.get_action_data(ACTION_DATA_WITHDRAW_MULTIPLES):,.0f}"
+        error_message = f"Jumlah withdraw harus kelipatan Rp.{user_model.action.get_action_data(ACTION_DATA_WITHDRAW_MULTIPLES):,.0f}\nSilahkan masukkan jumlah withdraw yang kelipatan Rp.{user_model.action.get_action_data(ACTION_DATA_WITHDRAW_MULTIPLES):,.0f}"
         if isinstance(callback, CallbackQuery):
-            user_model.add_action_message_id((await callback.message.answer(error_message, reply_markup=None)).message_id)
+            user_model.add_action_message_id((await callback.message.answer(error_message, reply_markup=builder.as_markup())).message_id)
             await user_model.save_to_state()
             await callback.answer()
             return
         else:
-            user_model.add_action_message_id((await callback.answer(error_message)).message_id)
+            user_model.add_action_message_id((await callback.answer(error_message, reply_markup=builder.as_markup())).message_id)
+            await user_model.save_to_state()
+            return
+    
+    print(int(user_model.action.get_action_data(ACTION_DATA_USER_CREDIT)))
+    if amount > int(user_model.action.get_action_data(ACTION_DATA_USER_CREDIT)):
+        error_message = f"Saldo tidak cukup, saldo saat ini: <b>Rp.{user_model.action.get_action_data(ACTION_DATA_USER_CREDIT):,.0f}</b>\nSilahkan masukkan jumlah withdraw yang lebih kecil"
+        if isinstance(callback, CallbackQuery):
+            user_model.add_action_message_id((await callback.message.answer(error_message, reply_markup=builder.as_markup())).message_id)
+            await user_model.save_to_state()
+            await callback.answer()
+            return
+        else:
+            user_model.add_action_message_id((await callback.answer(error_message, reply_markup=builder.as_markup())).message_id)
             await user_model.save_to_state()
             return
     
@@ -183,6 +207,7 @@ async def withdraw_input_amount(callback: CallbackQuery | Message, config: BotCo
     message = f"""
 <b>Konfirmasi Withdraw:</b>
 
+Saldo saat ini: <b>Rp.{user_model.action.get_action_data(ACTION_DATA_USER_CREDIT):,.0f}</b>
 Jumlah withdraw: <b>Rp.{user_model.action.get_action_data(ACTION_DATA_WITHDRAW_AMOUNT):,.0f}</b>
 Rekening Withdraw: <b>{user_model.action.get_action_data(ACTION_DATA_WITHDRAW_DESTINATION)}</b>
 
@@ -213,6 +238,10 @@ async def withdraw_confirm_yes(callback: CallbackQuery, config: BotConfig, state
     response = await api_client.confirm_withdraw(amount=user_model.action.get_action_data(ACTION_DATA_WITHDRAW_AMOUNT), notes="")
     if response.is_error:
         user_model.add_action_message_id((await bot.send_message(chat_id, f"Gagal melakukan withdraw: {response.get_error_message()}", reply_markup=None)).message_id)
+        if response.has_validation_errors:
+            jumlah_wd_error = response.metadata.get('validation', {}).get('jumlahwd', [])
+            if len(jumlah_wd_error) > 0:
+                user_model.add_action_message_id((await bot.send_message(chat_id, f"Silahkan masukkan jumlah withdraw yang valid", reply_markup=None)).message_id)
         await user_model.save_to_state()
         await callback.answer()
         return
