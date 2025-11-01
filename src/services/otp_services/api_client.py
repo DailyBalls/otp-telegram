@@ -2,6 +2,7 @@
 Simple OTP API Client
 """
 import hashlib
+import json
 import aiohttp
 from typing import Dict, Any, Optional
 from .models import APIResponse
@@ -129,6 +130,7 @@ class OTPAPIClient:
             print("URL: ", f"{self.base_url}{endpoint}")
             print("METHOD: ", method)
             print("DATA: ", data)
+            print("HEADERS: ", json.dumps(headers, indent=2))
             print("CUSTOM HEADERS: ", custom_headers)
             print("ERROR HASH: ", md5_hash)
             print("ERROR: ", e)
