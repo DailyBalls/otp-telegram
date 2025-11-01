@@ -12,6 +12,9 @@ from models.model_games import Game, Provider
 from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 from bot_instance import LoggedInStates, bot
+from utils.logger import get_logger
+
+logger = get_logger()
 
 async def callback_game_generate_launch(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, api_client: OTPAPIClient, user_model: ModelUser) -> None:
     game_launch_string = callback.data.replace("game_launch_", "")
@@ -72,8 +75,9 @@ async def _game_search(user_model: ModelUser, search_base64: str, page: int, api
     navigation_builder.add(InlineKeyboardButton(text="↩️ Tutup", callback_data=f"action_close_with_answer_"))
 
     if api_response.data['pagination']['hasMore'] == True:
+        callback_data_str = f"game_search_{search_query}_{page + 1}"
+        logger.debug(f"Game search callback data: {callback_data_str}")
         navigation_builder.add(InlineKeyboardButton(text="Selanjutnya ➡️", callback_data=f"game_search_{page + 1}_{search_base64}"))
-        print(f"game_search_{search_query}_{page + 1}")
     else:
         navigation_builder.add(InlineKeyboardButton(text="Selanjutnya 🚫", callback_data=f"action_reply_callback_Sudah_Halaman_Terakhir"))
     navigation_builder.adjust(3)

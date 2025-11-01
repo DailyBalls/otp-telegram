@@ -13,9 +13,12 @@ from models.model_telegram_data import ModelTelegramData
 from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 import utils.models as model_utils
+from utils.logger import get_logger
 import re
 import unicodedata
 import base64
+
+logger = get_logger()
 ACTION_DEPOSIT = "deposit"
 KEY_CACHED_DEPOSIT_AMOUNTS = "cached_deposit_amounts"
 ACTION_DATA_MINIMUM_DEPOSIT = "minimum_deposit"
@@ -183,7 +186,7 @@ async def deposit_ask_method(event: CallbackQuery | Message, config: BotConfig, 
     builder.adjust(1)
     message = f"Pilih metode pembayaran untuk melakukan deposit"
     method_message_id = user_model.action.get_action_data(MESSAGE_MENU_DEPOSIT_METHOD)
-    print("Method Message ID: ", method_message_id)
+    logger.debug(f"Method Message ID: {method_message_id}")
     if method_message_id is not None:
         await bot.edit_message_text(chat_id=chat_id, message_id=method_message_id, text=message, reply_markup=builder.as_markup())
     else:
@@ -901,7 +904,7 @@ async def deposit_back_button(event: CallbackQuery, config: BotConfig, state: FS
     
     navigation_to = event.data.replace("deposit_back_button_", "")
 
-    print("Navigation To: ", navigation_to)
+    logger.debug(f"Navigation To: {navigation_to}")
     if navigation_to == "ask_method":
         await event.message.delete()
         user_model.action.set_action_data(MESSAGE_MENU_DEPOSIT_CHANNEL, None)

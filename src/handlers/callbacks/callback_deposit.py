@@ -13,6 +13,9 @@ from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 from utils import validators
 import utils.models as model_utils
+from utils.logger import get_logger
+
+logger = get_logger()
 
 ALLOWED_DEPOSIT_CHANNEL_TYPES = ["QRIS", "VA", "BANK"]
 ACTION_DEPOSIT = "deposit"
@@ -186,7 +189,7 @@ async def callback_deposit_confirm_yes(callback: types.CallbackQuery, config: Bo
     action_model: ModelAction | None = await model_utils.load_model(ModelAction, state)
     await callback.answer()
     if action_model is not None:
-        print("Unsetting message id", callback.message.message_id)
+        logger.debug(f"Unsetting message id: {callback.message.message_id}")
         action_model.unset_message_id(callback.message.message_id)
         await action_model.save_to_state()
     user_model.unset_message_id(callback.message.message_id)

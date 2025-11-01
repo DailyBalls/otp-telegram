@@ -9,6 +9,9 @@ from models.model_menu import ModelMenu
 from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 import utils.models as model_utils
+from utils.logger import get_logger
+
+logger = get_logger()
 
 '''
 Social Media Menu
@@ -139,7 +142,7 @@ async def guest_menu(msg: Message, config: BotConfig, state: FSMContext) -> None
 
     menu_model.add_message_id(msg.message_id)
     menu_model.logged_in=False
-    print(menu_model.list_menu_ids)
+    logger.debug(f"Menu model list_menu_ids: {menu_model.list_menu_ids}")
     builder = InlineKeyboardBuilder()
     builder.add(InlineKeyboardButton(text="Login", callback_data="login"))
     builder.add(InlineKeyboardButton(text="Register", callback_data="register"))

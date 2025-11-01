@@ -16,6 +16,9 @@ from services.otp_services.models import APIResponse
 import utils.fsm as fsm_utils
 from bot_instance import GuestStates, bot
 import utils.models as handler_utils
+from utils.logger import get_logger
+
+logger = get_logger()
 
 
 class AuthenticatedSessionMiddleware(BaseModelMiddleware):
@@ -41,8 +44,8 @@ class AuthenticatedSessionMiddleware(BaseModelMiddleware):
             if response.is_authentication_error:
                 raise InvalidSessionError()
             if(response.data is None):
-                print("response from OTP API is None")
-                print(response, response.is_error, response.is_authentication_error, response.is_session_expired)
+                logger.warning("response from OTP API is None")
+                logger.warning(f"Response details - is_error: {response.is_error}, is_authentication_error: {response.is_authentication_error}, is_session_expired: {response.is_session_expired}")
                 return
             await user_model.fill_from_dict(response.data)
             
@@ -59,11 +62,11 @@ class AuthenticatedSessionMiddleware(BaseModelMiddleware):
             return await handler(event, data)
         
         except InvalidSessionError as e:
-            print("InvalidSessionError")
-            print(e)
+            logger.warning("InvalidSessionError")
+            logger.warning(f"Error: {e}")
             if user_model is None:
                 user_model = await handler_utils.load_model(ModelUser, self.fsm_context)
-            print("user_model is None : ", user_model is None)
+            logger.debug(f"user_model is None: {user_model is None}")
             if user_model:
                 await user_model.delete_all_messages()
                 await user_model.delete_from_state()

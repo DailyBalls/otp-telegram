@@ -14,6 +14,9 @@ from models.model_telegram_data import ModelTelegramData
 from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 import utils.models as model_utils
+from utils.logger import get_logger
+
+logger = get_logger()
 
 async def callback_register_edit(callback: types.CallbackQuery, config: BotConfig, state: FSMContext, register_model: ModelRegister) -> None:
     current_state = await state.get_state()
@@ -83,7 +86,7 @@ async def callback_register_confirm_yes(callback: types.CallbackQuery, config: B
             for field, errors in submit_registration.metadata.get('validation', {}).items():
                 for error in errors:
                     register_model.add_message_id((await callback.message.answer(f"Validasi Error: {error}")).message_id)
-        print("There is an error when submitting registration to OTP API", submit_registration.error, submit_registration.metadata)
+        logger.error(f"There is an error when submitting registration to OTP API - error: {submit_registration.error}, metadata: {submit_registration.metadata}")
         return
     await register_model.delete_all_messages()
 

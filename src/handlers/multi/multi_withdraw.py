@@ -11,6 +11,9 @@ from models.model_user import ModelUser
 from services.otp_services import api_client
 from services.otp_services.api_client import OTPAPIClient
 import utils.models as model_utils
+from utils.logger import get_logger
+
+logger = get_logger()
 
 ACTION_WITHDRAW                  = "withdraw"
 ACTION_DATA_MINIMUM_WITHDRAW     = "minimum_withdraw"
@@ -190,8 +193,9 @@ async def withdraw_input_amount(callback: CallbackQuery | Message, config: BotCo
             await user_model.save_to_state()
             return
     
-    print(int(user_model.action.get_action_data(ACTION_DATA_USER_CREDIT)))
-    if amount > int(user_model.action.get_action_data(ACTION_DATA_USER_CREDIT)):
+    user_credit = int(user_model.action.get_action_data(ACTION_DATA_USER_CREDIT))
+    logger.debug(f"User credit: {user_credit}")
+    if amount > user_credit:
         error_message = f"Saldo tidak cukup, saldo saat ini: <b>Rp.{user_model.action.get_action_data(ACTION_DATA_USER_CREDIT):,.0f}</b>\nSilahkan masukkan jumlah withdraw yang lebih kecil"
         if isinstance(callback, CallbackQuery):
             user_model.add_action_message_id((await callback.message.answer(error_message, reply_markup=builder.as_markup())).message_id)

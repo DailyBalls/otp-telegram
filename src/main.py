@@ -3,10 +3,11 @@ from typing import Literal
 from aiogram.fsm.storage.base import DefaultKeyBuilder, StorageKey
 from dotenv import load_dotenv
 
-ENV_FILE = getenv("ENV_FILE") or ".env"
-ENV_PATH = path.join(path.dirname(path.dirname(__file__)), ENV_FILE)
-print("ENV_PATH: ", ENV_PATH)
-load_dotenv(ENV_PATH)
+
+if getenv("ENV_FILE") is not None:
+    ENV_FILE = getenv("ENV_FILE") or ".env"
+    ENV_PATH = path.join(path.dirname(path.dirname(__file__)), ENV_FILE)
+    load_dotenv(ENV_PATH)
 
 import asyncio
 from aiogram.fsm.storage.redis import RedisStorage
@@ -24,6 +25,8 @@ from bot_instance import bot
 from config import BotConfig
 import redis.asyncio as redis
 
+from utils.logger import setup_logger
+
 
 TOKEN = getenv("BOT_TOKEN")
 WHITELIST_MODE = str(getenv("WHITELIST_MODE")).lower() == "true"
@@ -33,6 +36,9 @@ OTP_HOST = getenv("OTP_HOST")
 WHITELIST_IDS = [ 
     7957553101
 ]
+
+# Initialize logger
+logger = setup_logger(web_id=WEB_ID)
 
 config: BotConfig = None
 
@@ -57,7 +63,7 @@ async def main() -> None:
     """The main function which will execute our event loop and start polling."""
     redis_client = redis.Redis(host=getenv("REDIS_HOST"), port=getenv("REDIS_PORT"), password=getenv("REDIS_PASSWORD"), socket_connect_timeout=3)
     await redis_client.ping()
-    print("Redis Engine Ready! Vroom. Vroom.")
+    logger.info("Redis Engine Ready! Vroom. Vroom.")
     redis_storage = RedisStorage(redis=redis_client, key_builder=RedisKeyBuilder())
     
     config = BotConfig(web_id=WEB_ID, site_name=SITE_NAME, whitelist_mode=WHITELIST_MODE, whitelist_ids=WHITELIST_IDS, otp_host=OTP_HOST)
@@ -68,7 +74,7 @@ async def main() -> None:
     register_routers(dp)
 
     #https://emojicombos.com/ascii-art
-    print(f"""
+    logger.info(f"""
 ⠀      (\__/)
        (•ㅅ•)      System is running...
     ＿ノヽ ノ＼＿      using polling method.
@@ -84,5 +90,5 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    print("Burning up the Engine...")
+    logger.info("Burning up the Engine...")
     asyncio.run(main())

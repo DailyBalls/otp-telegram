@@ -7,14 +7,17 @@ from config import BotConfig
 from models.model_games import Game, Provider
 from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
+from utils.logger import get_logger
 import base64
 from contextlib import suppress
+
+logger = get_logger()
 
 async def game_list(callback: CallbackQuery, config: BotConfig, state: FSMContext, api_client: OTPAPIClient, user_model: ModelUser) -> None:
     callback_data = callback.data.replace("game_list_", "").split("_")
     game_part = callback_data[0].split("|")
     game_type = game_part[0]
-    print(callback_data)
+    logger.debug(f"Game callback data: {callback_data}")
     provider_id = game_part[1] if len(game_part) > 1 else "all"
     page = int(callback_data[1]) if len(callback_data) > 1 else 1
     response = await api_client.list_games_by_type_and_provider(game_type, provider_id, page)

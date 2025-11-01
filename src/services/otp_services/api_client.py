@@ -3,6 +3,7 @@ Simple OTP API Client
 """
 import hashlib
 import json
+import asyncio
 import aiohttp
 from typing import Dict, Any, Optional
 from .models import APIResponse
@@ -10,6 +11,9 @@ from .decorators import authenticated
 from .exceptions import InvalidSessionError
 from aiogram.fsm.context import FSMContext
 from yarl import URL
+from utils.logger import get_logger
+
+logger = get_logger()
 
 class OTPAPIClient:
     """Simple OTP API Client with aiohttp"""
@@ -53,8 +57,8 @@ class OTPAPIClient:
             
             return cookie_jar
         except Exception as e:
-            print("Failed to load cookies from state")
-            print(e)
+            logger.error("Failed to load cookies from state")
+            logger.error(f"Error: {e}")
             return aiohttp.CookieJar()
     
     async def _save_cookies_to_state(self, cookie_jar: aiohttp.CookieJar):
@@ -66,7 +70,7 @@ class OTPAPIClient:
             
             await self.state.update_data(cookie_jar=cookie_data)
         except Exception as e:
-            print(f"Warning: Failed to save cookies: {e}")
+            logger.warning(f"Failed to save cookies: {e}")
     
     async def clear_cookies(self):
         """Clear all cookies and update state"""
@@ -97,6 +101,7 @@ class OTPAPIClient:
         if not self.cookie_jar:
             self.cookie_jar = await self._load_cookies_from_state()
         
+        http_response = None
         try:
             # Use persistent session with cookie jar
             async with aiohttp.ClientSession(cookie_jar=self.cookie_jar) as session:
@@ -108,10 +113,10 @@ class OTPAPIClient:
                 ) as response:
                     # Save cookies from response to state
                     await self._save_cookies_to_state(self.cookie_jar)
-                    
+                    http_response = response
                     response_data = await response.json()
                     if response.status == 412:
-                        print(f"412 error {response_data.get('error', {}).get('message', 'Unknown error')}, retrying request to {self.base_url}{endpoint}")
+                        logger.warning(f"412 error {response_data.get('error', {}).get('message', 'Unknown error')}, retrying request to {self.base_url}{endpoint}")
                         return await self._make_request(method, endpoint, data, custom_headers)
                     return APIResponse(response_data)
         except Exception as e:
@@ -125,15 +130,18 @@ class OTPAPIClient:
                 "data": None,
                 "metadata": {}
             }
-            print("--------------------------------")
-            print("Telegram ID: ", self.telegram_id)
-            print("URL: ", f"{self.base_url}{endpoint}")
-            print("METHOD: ", method)
-            print("DATA: ", data)
-            print("HEADERS: ", json.dumps(headers, indent=2))
-            print("CUSTOM HEADERS: ", custom_headers)
-            print("ERROR HASH: ", md5_hash)
-            print("ERROR: ", e)
+            logger.error("--------------------------------")
+            logger.error(f"Telegram ID: {self.telegram_id}")
+            logger.error(f"URL: {self.base_url}{endpoint}")
+            logger.error(f"METHOD: {method}")
+            logger.error(f"DATA: {data}")
+            logger.error(f"HEADERS: {json.dumps(headers, indent=2)}")
+            logger.error(f"CUSTOM HEADERS: {custom_headers}")
+            logger.error(f"ERROR HASH: {md5_hash}")
+            logger.error(f"ERROR: {e}")
+            logger.error(f"Cookie Jar: {self.cookie_jar.__dict__}")
+            if http_response and hasattr(http_response, 'status'):
+                logger.error(f"HTTP Response Status: {http_response.status}")
             return APIResponse(error_response)
     
 

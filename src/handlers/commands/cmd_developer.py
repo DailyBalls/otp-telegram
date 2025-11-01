@@ -3,6 +3,9 @@ from aiogram.types.inline_keyboard_button import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from config import BotConfig
+from utils.logger import get_logger
+
+logger = get_logger()
 
 async def cmd_developer(msg: types.Message, config: BotConfig) -> None:
     """Process the `developer` command"""
@@ -26,7 +29,7 @@ async def cmd_developer_jump(msg: types.Message, config: BotConfig) -> None:
         return
 
     text = msg.text.replace("/developer_jump", "").strip().split(" ")
-    print(text)
+    logger.debug(f"Developer jump command text: {text}")
     if len(text) == 0:
         await msg.answer(f"Please provide a command to jump to")
         return

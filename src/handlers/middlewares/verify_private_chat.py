@@ -2,6 +2,9 @@ from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware
 from aiogram.enums.chat_type import ChatType
 from aiogram.types import CallbackQuery, Message, chat
+from utils.logger import get_logger
+
+logger = get_logger()
 
 class VerifyPrivateChatMiddleware(BaseMiddleware):
     def __init__(self) -> None:
@@ -21,7 +24,7 @@ class VerifyPrivateChatMiddleware(BaseMiddleware):
 
         if type_chat is None:
             await event.answer("Terjadi kesalahan, silahkan ulangi proses")
-            print("Gagal Mendapatkan type chat")
+            logger.warning("Gagal Mendapatkan type chat")
             return
 
         if type_chat in (
