@@ -85,5 +85,6 @@ class ModelRegister(BaseStateModel):
             "nama": self.bank_account_name,
             "bank": self.bank_name,
             "captcha": self.fill_captcha,
+            "ref": None
         }
                 
