@@ -1,8 +1,12 @@
-from os import getenv
+from os import getenv, path
 from typing import Literal
 from aiogram.fsm.storage.base import DefaultKeyBuilder, StorageKey
 from dotenv import load_dotenv
-load_dotenv()
+
+ENV_FILE = getenv("ENV_FILE") or ".env"
+ENV_PATH = path.join(path.dirname(path.dirname(__file__)), ENV_FILE)
+print("ENV_PATH: ", ENV_PATH)
+load_dotenv(ENV_PATH)
 
 import asyncio
 from aiogram.fsm.storage.redis import RedisStorage
