@@ -74,7 +74,7 @@ async def main() -> None:
     register_routers(dp)
 
     #https://emojicombos.com/ascii-art
-    logger.info(f"""
+    logger.info(r"""
 ⠀      (\__/)
        (•ㅅ•)      System is running...
     ＿ノヽ ノ＼＿      using polling method.
