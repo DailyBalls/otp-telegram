@@ -14,17 +14,17 @@ from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddl
 from handlers.middlewares.verify_private_chat import VerifyPrivateChatMiddleware
 from utils.filters import Text, TextPrefix
 from handlers.middlewares.verify_contact import VerifyContactMiddleware
-from handlers.multi import multi_authentication, multi_game, multi_menu, multi_transaction, multi_withdraw, multi_deposit
+from handlers.multi import multi_login, multi_register, multi_game, multi_menu, multi_transaction, multi_withdraw, multi_deposit
 
 
 callback_router = Router()
 callback_router.callback_query.middleware(VerifyPrivateChatMiddleware())
 callback_router.callback_query.middleware(VerifyContactMiddleware())
-callback_router.callback_query.register(multi_authentication.register_init, Text(data="register"))
-callback_router.callback_query.register(multi_authentication.register_cancel, Text(data="register_cancel"))
-callback_router.callback_query.register(multi_authentication.logout, Text(data="logout"))
-callback_router.callback_query.register(multi_authentication.login_init, Text(data="login"))
-callback_router.callback_query.register(multi_authentication.login_cancel, Text(data="login_cancel"))
+callback_router.callback_query.register(multi_register.register_init, Text(data="register"))
+callback_router.callback_query.register(multi_register.register_cancel, Text(data="register_cancel"))
+callback_router.callback_query.register(multi_login.logout, Text(data="logout"))
+callback_router.callback_query.register(multi_login.login_init, Text(data="login"))
+callback_router.callback_query.register(multi_login.login_cancel, Text(data="login_cancel"))
 
 register_router = Router()
 register_router.callback_query.middleware(RegisterSessionMiddleware())

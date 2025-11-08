@@ -11,7 +11,7 @@ from handlers.messages.msg_register import msg_register_1_username, msg_register
 from handlers.messages.msg_deposit import msg_deposit_ask_amount
 from handlers.messages.msg_game import msg_game_search
 
-from handlers.multi import multi_authentication, multi_deposit, multi_menu, multi_withdraw
+from handlers.multi import multi_login, multi_register, multi_deposit, multi_menu, multi_withdraw
 from utils.filters import StatesGroup, Text
 from handlers.middlewares.verify_private_chat import VerifyPrivateChatMiddleware
 
@@ -22,19 +22,19 @@ message_router.message.middleware(VerifyPrivateChatMiddleware())
 message_router.message.middleware(VerifyContactMiddleware())
 message_router.message.filter(~F.text.startswith("/"))
 message_router.message.register(msg_contact, F.contact)
-message_router.message.register(multi_authentication.logout, Text(data="logout"))
+message_router.message.register(multi_login.logout, Text(data="logout"))
 
 guest_router = Router()
 guest_router.message.filter(~StatesGroup(LoggedInStates)) # ~ = Not in LoggedInStates
-guest_router.message.register(multi_authentication.login_init, Text(data="login"))
-guest_router.message.register(multi_authentication.register_init, Text(data="register"))
+guest_router.message.register(multi_login.login_init, Text(data="login"))
+guest_router.message.register(multi_register.register_init, Text(data="register"))
 guest_router.message.register(multi_menu.guest_menu, Text(data="menu"))
 message_router.include_router(guest_router)
 
 login_router = Router()
-login_router.message.register(multi_authentication.login_submit_username, GuestStates.login_1_ask_username)
-login_router.message.register(multi_authentication.login_submit_password, GuestStates.login_2_ask_password)
-login_router.message.register(multi_authentication.login_submit_captcha, GuestStates.login_3_ask_captcha)
+login_router.message.register(multi_login.login_submit_username, GuestStates.login_1_ask_username)
+login_router.message.register(multi_login.login_submit_password, GuestStates.login_2_ask_password)
+login_router.message.register(multi_login.login_submit_captcha, GuestStates.login_3_ask_captcha)
 message_router.include_router(login_router)
 
 # Contact message handler
@@ -59,7 +59,7 @@ authenticated_router.message.filter(StatesGroup(LoggedInStates))
 
 ## Menu Message Handlers
 authenticated_router.message.middleware(AuthenticatedSessionMiddleware())
-authenticated_router.message.register(multi_authentication.logout, Text(data="logout"))
+authenticated_router.message.register(multi_login.logout, Text(data="logout"))
 authenticated_router.message.register(multi_menu.logged_in_menu, Text(data="menu"))
 authenticated_router.message.register(multi_withdraw.withdraw_init, Text(data="withdraw"))
 authenticated_router.message.register(multi_deposit.deposit_init, Text(data="deposit"))
