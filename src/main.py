@@ -78,8 +78,8 @@ async def main() -> None:
 ⠀      (\__/)
        (•ㅅ•)      System is running...
     ＿ノヽ ノ＼＿      using polling method.
- `/ `/ ⌒Ｙ⌒ Ｙ  ヽ     with redis storage.
- (  (三ヽ人　 /　|
+ `/ `/ ⌒Ｙ⌒ Ｙ ヽ     with redis storage.
+ (  (三ヽ人　 /　 |
  | ﾉ⌒＼ ￣￣ヽ  ノ
  ヽ＿＿＿＞､＿_／       Meoww.. *** I'm a catto !!! ***
      ｜( 王 ﾉ〈    (\__/)
