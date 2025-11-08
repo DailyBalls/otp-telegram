@@ -163,7 +163,6 @@ Entrypoint:
 '''
 async def register_ask_bank_name(msg: Message, config: BotConfig, state: FSMContext, chat_id: int, register_model: ModelRegister):
     builder = keyboard_guest.bank_selection(register_model.bank_list)
-    builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="register_cancel"))
     register_model.add_message_id((await bot.send_message(chat_id, "Silahkan pilih bank yang ingin Anda gunakan", reply_markup=builder.as_markup())).message_id)
     await register_model.save_to_state()
     await state.set_state(GuestStates.register_3_ask_bank_name)
