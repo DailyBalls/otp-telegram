@@ -404,7 +404,7 @@ async def deposit_choose_user_bank(event: CallbackQuery, config: BotConfig, stat
     await state.set_state(LoggedInStates.deposit_ask_amount)
     user_model.action.set_action_data(ACTION_SUBMITTED_USER_BANK, user_bank_id)
     await user_model.save_to_state()
-    if len(user_model.action.get_action_data(ACTION_DATA_PROMO)) > 0:
+    if user_model.action.get_action_data(ACTION_DATA_PROMO) is not None and len(user_model.action.get_action_data(ACTION_DATA_PROMO)) > 0:
         return await deposit_ask_promo(event, config, state, user_model, chat_id)
 
     return await deposit_ask_amount(event, config, state, user_model, chat_id)
