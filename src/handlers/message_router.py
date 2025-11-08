@@ -7,7 +7,6 @@ from handlers.messages.msg_rekening import msg_rekening_ask_bank_account_number
 from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddleware
 from handlers.middlewares.verify_contact import VerifyContactMiddleware
 from handlers.middlewares.register_middleware import RegisterSessionMiddleware
-# from handlers.messages.msg_register import msg_register_1_username, msg_register_2_password, msg_register_3_bank_name, msg_register_4_bank_account_name, msg_register_5_bank_account_number
 from handlers.messages.msg_deposit import msg_deposit_ask_amount
 from handlers.messages.msg_game import msg_game_search
 
