@@ -4,14 +4,16 @@ from aiogram.types.message import Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from config import BotConfig
 from handlers.callbacks.callback_auth import callback_auth_clear
+from handlers.multi import multi_menu
 from keyboards.inline import keyboard_guest
+from keyboards.reply.keyboard import get_logged_in_menu_builder
 from models.model_register import ModelRegister
 from models.model_telegram_data import ModelTelegramData
 from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 from utils import validators
 import utils.models as model_utils
-from bot_instance import GuestStates, bot
+from bot_instance import GuestStates, LoggedInStates, bot
 from aiogram.fsm.context import FSMContext
 from utils.logger import get_logger
 
@@ -343,7 +345,7 @@ Register Confirm Function
 Entrypoint:
 - register_submit_referral_code
 '''
-async def register_confirm_yes(callback: CallbackQuery, config: BotConfig, state: FSMContext, register_model: ModelRegister) -> None:
+async def register_confirm_yes(callback: CallbackQuery, config: BotConfig, state: FSMContext, chat_id: int, register_model: ModelRegister) -> None:
     api_client = OTPAPIClient(state=state, user_id=callback.from_user.id, base_url=config.otp_host)
     submit_registration = await api_client.submit_registration(register_model.get_submit_registration_data())
     if submit_registration.is_error:
@@ -351,10 +353,27 @@ async def register_confirm_yes(callback: CallbackQuery, config: BotConfig, state
         if submit_registration.has_validation_errors:
             for field, errors in submit_registration.metadata.get('validation', {}).items():
                 for error in errors:
-                    register_model.add_message_id((await callback.message.answer(f"Validasi Error: {error}")).message_id)
+                    register_model.add_message_id((await bot.send_message(chat_id, f"Validasi Error: {error}")).message_id)
         logger.error(f"There is an error when submitting registration to OTP API - error: {submit_registration.error}, metadata: {submit_registration.metadata}")
         return
     await register_model.delete_all_messages()
+    
+    await state.update_data(**{register_model._get_state_key(): None}) # Delete the register model from the state
+    user_model = ModelUser(
+        **submit_registration.data,
+        state=state,
+        chat_id=callback.message.chat.id,
+        is_authenticated=True,
+    )
+    await user_model.save_to_state()
+    user_model.add_message_id((await callback.message.answer("Berhasil melakukan registrasi", reply_markup=get_logged_in_menu_builder().as_markup(resize_keyboard=True))).message_id)
+    await callback.answer("Registrasi berhasil")
+    await callback_auth_clear(config, state)
+
+    # Redirect to authenticated /start command
+    await state.set_state(LoggedInStates.main_menu)
+    await multi_menu.logged_in_menu(callback.message, config, state, user_model)
+    return
 
 
 '''
