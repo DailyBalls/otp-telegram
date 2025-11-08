@@ -13,6 +13,7 @@ def registration_confirm_and_edit() -> InlineKeyboardBuilder:
     builder_edit.add(InlineKeyboardButton(text="Edit Bank", callback_data="register_edit_bank"))
     builder_edit.add(InlineKeyboardButton(text="Edit Nama Rekening", callback_data="register_edit_bank_account_name"))
     builder_edit.add(InlineKeyboardButton(text="Edit Nomor Rekening", callback_data="register_edit_bank_account_number"))
+    builder_edit.add(InlineKeyboardButton(text="Edit Referral Code", callback_data="register_edit_referral_code"))
     builder_edit.adjust(1)
 
     builder_confirm.attach(builder_edit)

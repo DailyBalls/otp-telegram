@@ -7,7 +7,7 @@ from aiogram.types.callback_query import CallbackQuery
 from handlers.callbacks.callback_action import callback_action_cancel, callback_action_reply_callback, callback_action_close_with_answer
 from handlers.callbacks.callback_deposit import callback_deposit_ask_payment_method, callback_deposit_confirm_channel, callback_deposit_init, callback_deposit_ask_channel, callback_deposit_confirm_yes, callback_deposit_cancel
 from handlers.callbacks.callback_game import callback_game_generate_launch, callback_game_search_init, callback_game_search_navigation
-from handlers.callbacks.callback_register import callback_register_bank, callback_register_edit, callback_auth_clear, callback_register_confirm_yes
+# from handlers.callbacks.callback_register import callback_register_bank, callback_register_edit, callback_auth_clear, callback_register_confirm_yes
 from handlers.callbacks.callback_rekening import callback_rekening_add, callback_rekening_list, callback_rekening_add_bank, callback_rekening_add_cancel, callback_rekening_add_confirm
 from handlers.middlewares.register_middleware import RegisterSessionMiddleware
 from handlers.middlewares.authenticated_session import AuthenticatedSessionMiddleware
@@ -28,10 +28,11 @@ callback_router.callback_query.register(multi_login.login_cancel, Text(data="log
 
 register_router = Router()
 register_router.callback_query.middleware(RegisterSessionMiddleware())
-register_router.callback_query.register(callback_register_edit, TextPrefix(prefix="register_edit_"))
-register_router.callback_query.register(callback_register_bank, TextPrefix(prefix="register_bank_"))
-register_router.callback_query.register(callback_register_confirm_yes, Text(data="register_confirm_yes"))
-register_router.callback_query.register(callback_auth_clear, Text(data="register_confirm_no"))
+register_router.callback_query.register(multi_register.register_edit, TextPrefix(prefix="register_edit_"))
+register_router.callback_query.register(multi_register.register_submit_bank_name, TextPrefix(prefix="register_bank_"))
+register_router.callback_query.register(multi_register.register_submit_referral_code, Text(data="register_skip_referral_code"))
+register_router.callback_query.register(multi_register.register_confirm_yes, Text(data="register_confirm_yes"))
+register_router.callback_query.register(multi_register.register_confirm_no, Text(data="register_confirm_no"))
 callback_router.include_router(register_router)
 
 logged_in_router = Router()

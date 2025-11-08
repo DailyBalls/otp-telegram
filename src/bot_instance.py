@@ -18,7 +18,9 @@ class GuestStates(StatesGroup):
     register_4_edit_bank_account_name   = State()
     register_5_ask_bank_account_number  = State()
     register_5_edit_bank_account_number = State()
-    register_6_ask_confirm_register     = State()
+    register_6_ask_referral_code        = State()
+    register_6_edit_referral_code       = State()
+    register_7_ask_confirm_register     = State()
     
     login_1_ask_username                = State()
     login_2_ask_password                = State()

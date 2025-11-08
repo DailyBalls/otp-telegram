@@ -19,6 +19,7 @@ class ModelRegister(BaseStateModel):
     bank_list: Optional[list[str]] = None
     is_required_captcha: Optional[bool] = False
     fill_captcha: Optional[str] = None
+    referral_code: Optional[str] = None
 
 
     def _get_state_key(self) -> str:
@@ -63,6 +64,10 @@ class ModelRegister(BaseStateModel):
 
     def set_fill_captcha(self, value: str):
         self.fill_captcha = value
+        self._auto_save_if_enabled()
+
+    def set_referral_code(self, value: str):
+        self.referral_code = value
         self._auto_save_if_enabled()
 
     def add_message_id(self, message_id: int) -> None:

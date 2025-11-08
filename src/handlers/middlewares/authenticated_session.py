@@ -5,10 +5,10 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.types.keyboard_button import KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
+from keyboards.reply.keyboard import get_guest_menu_builder
 from handlers.callbacks.callback_auth import callback_auth_clear
 from handlers.middlewares.base_model_middleware import BaseModelMiddleware
 from handlers.multi import multi_menu
-from handlers.multi.multi_authentication import get_guest_menu_builder
 from models.model_user import ModelUser
 from services.otp_services.api_client import OTPAPIClient
 from services.otp_services.exceptions import InvalidSessionError

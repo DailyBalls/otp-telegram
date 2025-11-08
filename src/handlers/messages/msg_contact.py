@@ -9,7 +9,8 @@ from bot_instance import bot
 from config import BotConfig
 from handlers.multi import multi_menu
 from models.model_telegram_data import ModelTelegramData
-from handlers.multi.multi_authentication import get_guest_menu_builder
+from keyboards.reply.keyboard import get_guest_menu_builder
+
 async def msg_contact(msg: types.Message, config: BotConfig, state: FSMContext, telegram_data: ModelTelegramData) -> None:
     # Send confirmation message
     await msg.answer(
