@@ -73,19 +73,21 @@ async def main() -> None:
 
     register_routers(dp)
 
+    bot_username = (await bot.get_me()).username
+
     #https://emojicombos.com/ascii-art
     logger.info(r"""
 ⠀      (\__/)
        (•ㅅ•)      System is running...
     ＿ノヽ ノ＼＿      using polling method.
  `/ `/ ⌒Ｙ⌒ Ｙ ヽ     with redis storage.
- (  (三ヽ人　 /　 |
- | ﾉ⌒＼ ￣￣ヽ  ノ
+ (  (三ヽ人　 /　 |     Running as @%s (https://t.me/%s)
+ | ﾉ⌒＼ ￣￣ヽ  ノ     Site Name: "%s"
  ヽ＿＿＿＞､＿_／       Meoww.. *** I'm a catto !!! ***
      ｜( 王 ﾉ〈    (\__/)
      / ﾐ`ー―彡 \   (•ㅅ•)
     /  ╰    ╯   \  /    \>
-""")
+""", bot_username, bot_username, SITE_NAME)
     await dp.start_polling(bot)
 
 
