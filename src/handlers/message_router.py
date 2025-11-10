@@ -33,7 +33,6 @@ message_router.include_router(guest_router)
 login_router = Router()
 login_router.message.register(multi_login.login_submit_username, GuestStates.login_1_ask_username)
 login_router.message.register(multi_login.login_submit_password, GuestStates.login_2_ask_password)
-login_router.message.register(multi_login.login_submit_captcha, GuestStates.login_3_ask_captcha)
 message_router.include_router(login_router)
 
 # Contact message handler

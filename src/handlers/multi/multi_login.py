@@ -67,9 +67,6 @@ async def login_init(callback: CallbackQuery | Message, config: BotConfig, state
                 await callback.answer(error_message)
                 return
     
-        # Success case - check if captcha is required
-        captcha_required = response.data.get('captcha', False) if response.data else False
-        login_model.is_required_captcha = captcha_required
         builder = InlineKeyboardBuilder()
         builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="login_cancel"))
         login_model.add_message_id((await bot.send_message(chat_id, """
@@ -160,25 +157,6 @@ async def login_submit_password(callback: Message, config: BotConfig, state: FSM
     login_model.add_message_id(callback.message_id)
     login_model.password = callback.text
 
-    if login_model.is_required_captcha:
-        builder = InlineKeyboardBuilder()
-        builder.add(InlineKeyboardButton(text="❌ Batalkan", callback_data="login_cancel"))
-        
-        login_model.add_message_id((await callback.answer("Silahkan kirimkan captcha", reply_markup=builder.as_markup())).message_id)
-        await state.set_state(GuestStates.login_3_ask_captcha)
-        await login_model.save_to_state()
-    else:
-        return await login_submit(callback, config, state, login_model)
-
-async def login_submit_captcha(callback: Message, config: BotConfig, state: FSMContext, login_model: ModelLogin):
-    login_model: ModelLogin | None = await model_utils.load_model(ModelLogin, state)
-    if login_model is None:
-        await callback.reply("Silahkan ulangi proses login")
-        return
-
-    login_model.add_message_id(callback.message_id)
-    login_model.captcha = callback.text
-    await login_model.save_to_state()
     return await login_submit(callback, config, state, login_model)
 
 '''
@@ -186,7 +164,6 @@ Login Submit Function
 
 Entrypoint:
 - self.login_submit_password()
-- self.login_submit_captcha()
 '''
 async def login_submit(callback: Message, config: BotConfig, state: FSMContext, login_model: ModelLogin):
     await login_model.delete_all_messages()

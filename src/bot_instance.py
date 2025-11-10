@@ -24,7 +24,6 @@ class GuestStates(StatesGroup):
     
     login_1_ask_username                = State()
     login_2_ask_password                = State()
-    login_3_ask_captcha                 = State()
 
 class LoggedInStates(StatesGroup):
     

@@ -7,8 +7,6 @@ from typing import Optional
 class ModelLogin(BaseStateModel):
     username: Optional[str] = None
     password: Optional[str] = None
-    captcha: Optional[str] = None
-    is_required_captcha: Optional[bool] = False
     list_messages_ids: Optional[list[int]] = None
     initiator_message_id: Optional[int] = None
     chat_id: Optional[int] = None
@@ -31,5 +29,4 @@ class ModelLogin(BaseStateModel):
         return {
             "username": self.username,
             "password": self.password,
-            "captcha": self.captcha if self.captcha is not None else "",
         }
